@@ -32,7 +32,7 @@ function Hero() {
       `}</style>
 
       {/* Main Container */}
-      <div className="flex flex-col lg:flex-row w-full min-h-[calc(100vh-3rem)] lg:h-[calc(100vh-4rem)] lg:aspect-[1.618] p-3 lg:p-11 overflow-visible bg-blue-50/50 mb-12 lg:mb-0">
+      <div className="flex flex-col lg:flex-row w-full max-w-7xl mx-auto min-h-[calc(100vh-3rem)] lg:min-h-144 xl:min-h-160 lg:h-auto p-3 lg:p-11 overflow-visible bg-blue-50/50 mb-12 lg:mb-0 rounded-4xl">
         
         {/* Image Section */}
         <div className="flex-1 min-h-0 w-full lg:w-1/2 flex justify-center items-center overflow-hidden order-first lg:order-last select-none p-4 lg:p-6">
@@ -66,7 +66,7 @@ function Hero() {
              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                
                <button 
-                 className="order-first lg:order-last bg-teal-700 text-white px-8 lg:px-12 py-4 lg:py-5 rounded-2xl font-semibold text-base lg:text-lg w-full lg:w-auto
+                 className="order-first lg:order-last bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
                    transition-all duration-200 ease-in-out
                    hover:bg-teal-950 hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none"
                  onClick={() => window.scrollBy({ top: window.innerHeight, behavior: 'smooth' })}

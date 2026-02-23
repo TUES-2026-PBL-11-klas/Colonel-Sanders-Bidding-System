@@ -32,7 +32,7 @@ function Navbar() {
           visible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className="relative flex justify-between items-center px-4 md:px-8 py-4">
+        <div className="relative layout-16by9 flex justify-between items-center px-4 md:px-8 py-4">
           {/* Logo - Left on Desktop, Centered on Mobile */}
           <div className="hidden md:flex items-center gap-6">
             <div className="text-lg md:text-xl font-bold">

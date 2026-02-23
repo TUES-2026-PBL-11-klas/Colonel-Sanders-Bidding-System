@@ -1,7 +1,34 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 @import "tailwindcss";
 
+@layer base {
+  body,
+  button,
+  input,
+  textarea,
+  select {
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+}
+
 @layer components {
+  .layout-16by9 {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (min-aspect-ratio: 16/9) {
+    .layout-16by9 {
+      width: min(100vw, calc(100vh * (16 / 9)));
+    }
+  }
+
   .font-montserrat {
     font-family: 'Montserrat', sans-serif;
   }

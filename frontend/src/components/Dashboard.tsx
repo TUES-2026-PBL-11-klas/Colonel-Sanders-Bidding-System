@@ -129,7 +129,7 @@ const renderImages = (images: string[]) => {
     );
   }
 
-  if (count == 4) {
+  if (count === 4) {
     return (
       <div className="flex flex-col w-full h-full gap-0">
         {[0, 2].map((startIdx) => (
@@ -227,7 +227,7 @@ export default function ProductCarousel() {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <section className="w-full min-h-screen py-6 px-4 flex flex-col items-center bg-blue-50">
+      <section className="w-full min-h-screen py-6 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
         
         <div className="text-center mb-6 lg:mb-10">
           <h2 className="font-montserrat text-3xl lg:text-5xl font-bold text-gray-800">
@@ -238,7 +238,7 @@ export default function ProductCarousel() {
         {/* Main Card Container */}
         <div 
           key={`carousel-${currentIndex}`} 
-          className="card-animate relative w-full max-w-7xl xl:max-w-[90%] bg-white rounded-4xl lg:rounded-[3rem] shadow-2xl border border-gray-100 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-220px)] lg:h-[calc(100vh-220px)]" 
+          className="card-animate relative w-full max-w-7xl bg-white rounded-4xl lg:rounded-[3rem] shadow-2xl border border-gray-100 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-220px)] lg:h-[calc(100vh-220px)]" 
           onTouchStart={handleTouchStart} 
           onTouchEnd={handleTouchEnd}
         >
@@ -276,16 +276,14 @@ export default function ProductCarousel() {
                 <h3 className="font-montserrat text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 leading-tight line-clamp-3 mr-3">
                   {current.model}
                 </h3>
-                <p className="text-slate-400 text-xs font-mono mt-1 tracking-tighter">
+                <p className="text-slate-400 text-xs mt-1 tracking-tight">
                   {current.serial}
                 </p>
               </div>
 
-              <div className="border-l-4 border-teal-600/20 pl-4 py-1">
-                <p className="text-slate-500 text-sm sm:text-base lg:text-lg leading-relaxed italic">
-                  "{current.description}"
-                </p>
-              </div>
+              <p className="text-slate-500 text-sm sm:text-base lg:text-lg leading-relaxed">
+                {current.description}
+              </p>
             </div>
 
             {/* Bottom Action Area */}
@@ -293,7 +291,7 @@ export default function ProductCarousel() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
-                  <p className="text-lg lg:text-2xl font-black text-slate-900">{formatEuro(current.basePrice)}</p>
+                  <p className="text-lg lg:text-2xl font-semibold text-slate-900">{formatEuro(current.basePrice)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Availability</p>
