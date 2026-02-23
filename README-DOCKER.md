@@ -28,7 +28,12 @@ Should show `(healthy)` in the STATUS column.
 
 ### Step 2: Run Spring Boot Locally
 
-```bash
+```powershell
+Get-Content .env | ForEach-Object {
+	if ($_ -match '^([^#][^=]+)=(.*)$') {
+		[Environment]::SetEnvironmentVariable($matches[1], $matches[2], 'Process')
+	}
+}
 cd backend
 ./gradlew bootRun
 ```
