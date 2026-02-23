@@ -65,6 +65,25 @@ Run both PostgreSQL and Spring Boot as Docker containers (for staging/CI environ
 - Docker Desktop installed and running
 - Docker Compose v2.0+
 
+### Setup Environment Variables
+
+Create a `.env` file in the project root with your database credentials:
+
+```bash
+# .env (in project root)
+DB_URL=jdbc:postgresql://postgres:5432/mydb
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+Docker Compose automatically reads this file and passes variables to all services.
+
+**Note:** Add `.env` to `.gitignore` to prevent credentials from being committed:
+
+```bash
+echo ".env" >> .gitignore
+```
+
 ### Start the Full Stack
 
 ```bash
@@ -73,9 +92,10 @@ docker-compose up --build
 ```
 
 This command will:
-1. Build the Spring Boot backend application
-2. Start PostgreSQL 16-Alpine database
-3. Start the backend service on port 8080
+1. Read environment variables from `.env`
+2. Build the Spring Boot backend application
+3. Start PostgreSQL 16-Alpine database
+4. Start the backend service on port 8080
 
 The backend will be available at: `http://localhost:8080`
 
