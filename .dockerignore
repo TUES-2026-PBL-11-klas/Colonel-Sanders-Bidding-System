@@ -1,0 +1,22 @@
+# Ignore build artifacts
+backend/build/
+backend/.gradle/
+backend/gradle/
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore Docker files
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Ignore documentation
+README.md
+*.md
