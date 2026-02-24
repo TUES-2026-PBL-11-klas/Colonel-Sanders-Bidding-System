@@ -5,14 +5,14 @@ services:
     container_name: colonel-sanders-bidding-system-postgres
     environment:
       POSTGRES_DB: mydb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d mydb"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,9 +24,9 @@ services:
       dockerfile: Dockerfile
     container_name: colonel-sanders-bidding-system-backend
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/mydb
-      DB_USERNAME: admin
-      DB_PASSWORD: admin
+      DB_URL: ${DB_URL_DOCKER}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "8080:8080"
     depends_on:
