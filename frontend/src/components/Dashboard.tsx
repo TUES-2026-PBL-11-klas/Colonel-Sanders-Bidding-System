@@ -1,39 +1,33 @@
-import { useState, useCallback, useRef } from 'react';
-
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    model: "Eames Lounge Chair & Ottoman Special Edition",
-    type: "Premium Furniture",
-    serial: "HML-90210-EV",
-    description: "Original 1956 design features black top-grain leather and a walnut veneer shell. Corporate surplus from executive headquarters.",
-    basePrice: 4200.00, 
-    images: ["/images/HeroGraphic.png"]
-  },
-  {
-    id: 2,
-    model: "Mac Studio M2 Ultra & Studio Display",
-    type: "IT Infrastructure",
-    serial: "APL-MS-M2U",
-    description: "High-performance workstation configuration. 24-core CPU and 76-core GPU. Decommissioned from creative department.",
-    basePrice: 3999.99,
-    images: ["/images/HeroGraphic.png"] 
-  }
-];
+import { useState, useCallback, useRef, useMemo } from 'react';
+import { MOCK_PRODUCTS, MOCK_TYPES } from '../data/mock_data';
 
 export default function InventoryDashboard() {
+  const dashboardProducts = useMemo(() => {
+    const shuffled = [...MOCK_PRODUCTS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, shuffled.length));
+  }, []);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
-  const current = MOCK_PRODUCTS[currentIndex];
+  const current = dashboardProducts[currentIndex];
+  const typeById = useMemo(
+    () => new Map(MOCK_TYPES.map((type) => [type.id, type.name])),
+    []
+  );
+  const currentTypeName = typeById.get(current?.type_id ?? -1) ?? 'Unknown Type';
   const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
+  if (!current) {
+    return null;
+  }
+
   const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev === MOCK_PRODUCTS.length - 1 ? 0 : prev + 1));
-  }, []);
+    setCurrentIndex((prev) => (prev === dashboardProducts.length - 1 ? 0 : prev + 1));
+  }, [dashboardProducts.length]);
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? MOCK_PRODUCTS.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? dashboardProducts.length - 1 : prev - 1));
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -51,7 +45,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <section className="w-full min-h-screen py-6 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
+    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
       
       {/* Minimalist Navigation Header */}
       <div className="w-full max-w-7xl flex justify-between items-center mb-6 lg:mb-10 px-4 sm:px-2">
@@ -64,7 +58,7 @@ export default function InventoryDashboard() {
              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
            </button>
            <span className="text-xs font-bold font-mono text-gray-300">
-             {currentIndex + 1} / {MOCK_PRODUCTS.length}
+             {currentIndex + 1} / {dashboardProducts.length}
            </span>
            <button onClick={nextSlide} className="text-gray-400 hover:text-teal-700 transition-colors">
              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
@@ -97,7 +91,7 @@ export default function InventoryDashboard() {
           <div className="flex-1 overflow-y-auto no-scrollbar mb-6">
             <div className="flex items-center gap-3 mb-4">
                <span className="h-px w-8 bg-teal-700/30" />
-               <span className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em]">{current.type}</span>
+              <span className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em]">{currentTypeName}</span>
             </div>
             
             <h3 className="font-montserrat text-2xl lg:text-3xl font-bold text-gray-800 mb-4 leading-tight">
@@ -131,7 +125,7 @@ export default function InventoryDashboard() {
 
       {/* Progress Footer */}
       <div className="mt-8 flex gap-2">
-        {MOCK_PRODUCTS.map((_, i) => (
+        {dashboardProducts.map((_, i) => (
           <div 
             key={i} 
             className={`h-1 rounded-full transition-all duration-500 ${i === currentIndex ? 'w-12 bg-teal-700' : 'w-4 bg-gray-200'}`}

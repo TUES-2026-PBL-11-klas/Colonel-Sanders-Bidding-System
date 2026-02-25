@@ -1,26 +1,10 @@
 import { useState } from "react";
+import { MOCK_PRODUCTS, MOCK_TYPES } from "../data/mock_data";
 
 function Auction() {
-    const MOCK_PRODUCT = [
-        {
-            id: 1,
-            model: "Eames Lounge Chair & Ottoman Special Edition",
-            type_id: 1,
-            serial: "HML-90210-EV",
-            description: "An original 1956 design features black top-grain leather and a walnut veneer shell. This special edition includes a polished chrome base and premium hide.",
-            basePrice: 4200.00, 
-            is_closed: false,
-            images: ["/images/HeroGraphic.png", "/images/HeroGraphic.png", "/images/HeroGraphic.png", "/images/HeroGraphic.png"]
-        },
-    ];
-
-    const MOCK_TYPES: Record<number, string> = {
-        1: "Premium Furniture",
-        2: "Computing",
-        3: "Photography"
-    };
-
-    const product = MOCK_PRODUCT[0];
+    const product = MOCK_PRODUCTS[0];
+    const typeById = new Map(MOCK_TYPES.map((type) => [type.id, type.name]));
+    const productTypeName = typeById.get(product.type_id) ?? "Unknown Type";
     const images = product.images;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const isOpen = !product.is_closed;
@@ -84,7 +68,7 @@ function Auction() {
 
                 <div className="w-full xl:w-[44%] xl:pl-2 flex flex-col">
                     <p className="text-teal-600 font-bold text-[10px] lg:text-xs uppercase tracking-[0.2em] mb-3">
-                        {MOCK_TYPES[product.type_id]}
+                        {productTypeName}
                     </p>
 
                     <h3 className="font-montserrat text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 leading-tight mb-3">

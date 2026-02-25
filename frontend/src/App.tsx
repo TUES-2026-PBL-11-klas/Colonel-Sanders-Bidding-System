@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Hero from './components/Hero'
 import Dashboard from './components/Dashboard'
+import YourBids from './components/Bids'
 import "./tailwind.css"
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <div className="layout-16by9 px-4 sm:px-6 lg:px-8 space-y-6 lg:space-y-10">
           <Hero />
           <Dashboard />
+          <YourBids />
         </div>
       </main>
       <Footer />
