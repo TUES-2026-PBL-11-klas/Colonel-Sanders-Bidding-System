@@ -7,3 +7,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+minio:
+  url: ${MINIO_ENDPOINT}
+  access:
+    name: ${MINIO_ACCESS_KEY}
+    secret: ${MINIO_SECRET_KEY}
+  bucket:
+    name: ${MINIO_BUCKET}
+  url-expiry-seconds: ${MINIO_URL_EXPIRY_SECONDS}

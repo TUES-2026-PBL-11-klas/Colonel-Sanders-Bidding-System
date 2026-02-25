@@ -17,6 +17,19 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: colonel-sanders-bidding-system-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
   # Spring Boot Backend
   backend:
     build:
@@ -27,12 +40,20 @@ services:
       DB_URL: ${DB_URL_DOCKER}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT_DOCKER}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_URL_EXPIRY_SECONDS: ${MINIO_URL_EXPIRY_SECONDS}
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  minio_data:
