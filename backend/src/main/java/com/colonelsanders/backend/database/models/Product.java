@@ -31,6 +31,9 @@ public class Product {
     @Getter @Setter
     private Boolean closed;
 
+    @Getter @Setter
+    private String imageObjectKey;
+
     //buyer_id?
     @Getter @Setter
     private Timestamp createdAt;

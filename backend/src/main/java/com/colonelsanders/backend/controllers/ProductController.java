@@ -3,6 +3,7 @@ package com.colonelsanders.backend.controllers;
 import com.colonelsanders.backend.database.models.Product;
 import com.colonelsanders.backend.database.repositories.ProductRepository;
 import com.colonelsanders.backend.dto.ProductImportResultDto;
+import com.colonelsanders.backend.services.ProductImageStorageService;
 import com.colonelsanders.backend.services.ProductImportService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,19 +17,24 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @RestController
-public class ProductImportController {
+public class ProductController {
 
     private final ProductImportService productImportService;
     private final ProductRepository productRepository;
+    private final ProductImageStorageService productImageStorageService;
 
-    public ProductImportController(ProductImportService productImportService, ProductRepository productRepository) {
+    public ProductController(ProductImportService productImportService,
+                                   ProductRepository productRepository,
+                                   ProductImageStorageService productImageStorageService) {
         this.productImportService = productImportService;
         this.productRepository = productRepository;
+        this.productImageStorageService = productImageStorageService;
     }
 
     @GetMapping(path = "/api/products")
@@ -79,5 +85,55 @@ public class ProductImportController {
                     .build();
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping(path = "/api/products/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadProductImage(@PathVariable("id") Long id, @RequestParam("file") MultipartFile file) {
+        Optional<Product> foundProduct = productRepository.findById(id);
+        if (foundProduct.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (file == null || file.isEmpty()) {
+            return new ResponseEntity<>(Map.of("error", "Image file is required"), HttpStatus.BAD_REQUEST);
+        }
+
+        Product product = foundProduct.get();
+        String objectKey = productImageStorageService.uploadProductImage(product, file);
+        product.setImageObjectKey(objectKey);
+        productRepository.save(product);
+
+        String imageUrl = productImageStorageService.getPresignedUrl(objectKey);
+        return new ResponseEntity<>(
+                Map.of(
+                        "productId", String.valueOf(product.getId()),
+                        "imageObjectKey", objectKey,
+                        "imageUrl", imageUrl
+                ),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping(path = "/api/products/{id}/image-url")
+    public ResponseEntity<?> getProductImageUrl(@PathVariable("id") Long id) {
+        Optional<Product> foundProduct = productRepository.findById(id);
+        if (foundProduct.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Product product = foundProduct.get();
+        if (product.getImageObjectKey() == null || product.getImageObjectKey().isBlank()) {
+            return new ResponseEntity<>(Map.of("error", "Product does not have an image"), HttpStatus.NOT_FOUND);
+        }
+
+        String imageUrl = productImageStorageService.getPresignedUrl(product.getImageObjectKey());
+        return new ResponseEntity<>(
+                Map.of(
+                        "productId", String.valueOf(product.getId()),
+                        "imageObjectKey", product.getImageObjectKey(),
+                        "imageUrl", imageUrl
+                ),
+                HttpStatus.OK
+        );
     }
 }
