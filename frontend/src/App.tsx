@@ -5,6 +5,8 @@ import Dashboard from './components/Dashboard';
 import Bids from './components/Bids';
 import AllAuctions from './components/Auctions';
 import Auction from './components/Auction';
+import Login from './components/Login';
+import User from './components/User';
 import "./tailwind.css";
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -19,6 +21,8 @@ function AppRoutes() {
         <Route path="/auctions" element={<AllAuctions />} />
         <Route path="/auctions/:id" element={<Auction />} />
         <Route path="/bids" element={<Bids />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/user" element={<User />} />
       </Routes>
 
       {backgroundLocation && (

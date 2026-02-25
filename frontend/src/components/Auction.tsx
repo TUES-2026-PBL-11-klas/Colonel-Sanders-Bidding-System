@@ -199,7 +199,7 @@ function Auction({ isModal = false }: AuctionProps) {
                                         disabled={!isOpen}
                                         className={`w-full h-14 rounded-2xl font-semibold text-base transition-all duration-300 border-2 ${
                                             isOpen
-                                                ? 'bg-teal-700 border-teal-700 text-white hover:bg-teal-950 hover:border-teal-950'
+                                                ? 'bg-teal-700 border-teal-700 text-white hover:bg-teal-950 hover:border-teal-950 cursor-pointer'
                                                 : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                                         }`}
                                     >
@@ -295,7 +295,7 @@ function Auction({ isModal = false }: AuctionProps) {
                         </div>
                         <button
                             disabled={!isOpen}
-                            className={`w-full h-16 rounded-2xl font-semibold text-base transition-all duration-300 border-2 mb-6 ${
+                            className={`w-full h-16 rounded-2xl font-semibold text-base transition-all duration-300 border-2 mb-6${
                                 isOpen
                                     ? 'bg-teal-700 border-teal-700 text-white hover:bg-teal-950 hover:border-teal-950'
                                     : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'

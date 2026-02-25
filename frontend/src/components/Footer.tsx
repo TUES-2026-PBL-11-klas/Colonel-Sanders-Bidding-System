@@ -5,7 +5,7 @@ export default function Footer() {
   
   return (
     <div className="w-full bg-teal-950 text-white p-4 text-center">
-      &copy; 2026 CrispyBid. All rights reserved (just trust me bro).
+      &copy; 2026 CrispyBid. All rights reserved.
     </div>
   )
 }

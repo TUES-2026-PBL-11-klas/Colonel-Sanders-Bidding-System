@@ -52,7 +52,7 @@ export default function InventoryDashboard() {
       {/* Minimalist Navigation Header */}
       <div className="w-full max-w-7xl flex justify-between items-center mb-6 lg:mb-10 px-4 sm:px-2">
         <div className="flex flex-col">
-          <h2 className="text-xl lg:text-3xl font-bold text-gray-800 font-montserrat">Current <span className="text-teal-700">Dsicovery Dashboard</span></h2>
+          <h2 className="text-xl lg:text-3xl font-bold text-gray-800 font-montserrat">Current <span className="text-teal-700">Discovery Dashboard</span></h2>
         </div>
         
         <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
