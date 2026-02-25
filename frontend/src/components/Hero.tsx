@@ -15,6 +15,29 @@ function Hero() {
     return () => observer.disconnect()
   }, [])
 
+  const slowScrollBy = (distance: number) => {
+    const startY = window.scrollY
+    const duration = 900
+    const startTime = performance.now()
+
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const easedProgress = easeInOutCubic(progress)
+
+      window.scrollTo(0, startY + distance * easedProgress)
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+
+    requestAnimationFrame(animate)
+  }
+
   return (
     <>
       <style>{`
@@ -69,7 +92,7 @@ function Hero() {
                  className="order-first lg:order-last bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
                    transition-all duration-200 ease-in-out
                    hover:bg-teal-950 hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none"
-                 onClick={() => window.scrollBy({ top: window.innerHeight, behavior: 'smooth' })}
+                 onClick={() => slowScrollBy(window.innerHeight * 0.6)}
                >
                  Take me to the dashboard
                </button>

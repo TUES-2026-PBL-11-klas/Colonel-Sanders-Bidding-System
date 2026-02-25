@@ -3,7 +3,7 @@ import { useState } from "react";
 function Auction() {
     const MOCK_PRODUCT = [
         {
-            id: "INV-001",
+            id: 1,
             model: "Eames Lounge Chair & Ottoman Special Edition",
             type_id: 1,
             serial: "HML-90210-EV",
@@ -24,6 +24,7 @@ function Auction() {
     const images = product.images;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const isOpen = !product.is_closed;
+    const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
     return (
         <section className="w-full py-6 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
@@ -54,7 +55,7 @@ function Auction() {
                         </div>
 
                         <div className="absolute top-4 right-4 px-3 py-1 bg-white/80 backdrop-blur rounded-full border border-gray-100 shadow-sm">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{product.id}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{formatInventoryId(product.id)}</p>
                         </div>
                     </div>
 
