@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function Footer() {
+export default function Footer() {
   const [] = useState(0)
   
   return (
@@ -9,5 +9,3 @@ function Footer() {
     </div>
   )
 }
-
-export default Footer

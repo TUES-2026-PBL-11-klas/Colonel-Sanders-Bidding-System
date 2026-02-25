@@ -1,8 +1,25 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { MOCK_PRODUCTS, MOCK_TYPES } from "../data/mock_data";
 
 function Auction() {
-    const product = MOCK_PRODUCTS[0];
+    const { id } = useParams();
+    const productId = Number(id);
+    const product = MOCK_PRODUCTS.find((item) => item.id === productId);
+
+    if (!product) {
+        return (
+            <section className="w-full py-16 px-4 flex flex-col items-center bg-blue-50 rounded-4xl">
+                <h2 className="font-montserrat text-3xl lg:text-5xl font-bold text-gray-800 text-center">
+                    Auction <span className="text-teal-700">Not Found</span>
+                </h2>
+                <p className="mt-4 text-slate-500 text-center">
+                    The auction you are looking for does not exist.
+                </p>
+            </section>
+        );
+    }
+
     const typeById = new Map(MOCK_TYPES.map((type) => [type.id, type.name]));
     const productTypeName = typeById.get(product.type_id) ?? "Unknown Type";
     const images = product.images;

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { MOCK_PRODUCTS, MOCK_TYPES } from '../data/mock_data';
 
 export default function InventoryDashboard() {
@@ -45,7 +46,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
+    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl mb-0">
       
       {/* Minimalist Navigation Header */}
       <div className="w-full max-w-7xl flex justify-between items-center mb-6 lg:mb-10 px-4 sm:px-2">
@@ -111,13 +112,13 @@ export default function InventoryDashboard() {
               </p>
               <p className="text-[10px] font-mono text-slate-300 mt-1 uppercase">ID: {current.serial}</p>
             </div>
-
-            <button 
-              className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-bold text-sm tracking-wide
-                transition-all duration-200 ease-in-out hover:bg-teal-950 hover:shadow-xl active:scale-95 w-full sm:w-auto"
+            <Link
+              to={`/auctions/${current.id}`}
+              className="bg-teal-700 text-white px-12 py-5 rounded-2xl font-bold text-base tracking-wide
+                transition-all duration-200 ease-in-out hover:bg-teal-950 hover:shadow-xl active:scale-95 w-full sm:w-auto text-center"
             >
               Details
-            </button>
+            </Link>
           </div>
 
         </div>

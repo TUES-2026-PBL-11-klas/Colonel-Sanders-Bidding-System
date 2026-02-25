@@ -1,16 +1,13 @@
-import { ProductCard } from "../components/ProductCard";
+import { ProductCard } from "./ProductCard";
 import { MOCK_BIDS, MOCK_PRODUCTS, MOCK_TYPES } from "../data/mock_data";
 
-export default function YourBids() {
+export default function Bids() {
   const productsById = new Map(MOCK_PRODUCTS.map((product) => [product.id, product]));
   const typeById = new Map(MOCK_TYPES.map((type) => [type.id, type.name]));
 
   const myBids = MOCK_BIDS.map((bid) => {
     const product = productsById.get(bid.product_id);
-
-    if (!product) {
-      return null;
-    }
+    if (!product) return null;
 
     return {
       ...product,
@@ -20,7 +17,7 @@ export default function YourBids() {
   }).filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
-    <div className="min-h-screen bg-blue-50/30 px-4">
+    <div className="min-h-screen bg-blue-50/30 px-4 py-12">
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-left">
           <h2 className="font-montserrat text-3xl lg:text-4xl font-bold text-gray-800">

@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^Set-Location frontend; npm run dev$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-function Hero() {
+export default function Hero() {
   const textRef = useRef(null)
   const [visible, setVisible] = useState(false)
 
@@ -112,5 +112,3 @@ function Hero() {
     </>
   )
 }
-
-export default Hero

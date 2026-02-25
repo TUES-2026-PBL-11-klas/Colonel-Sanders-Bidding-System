@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 interface ProductCardProps {
   id: number;
   model: string;
@@ -14,7 +16,11 @@ export const ProductCard = ({ id, model, type, price, priceLabel, image, isClose
   const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col">
+    <Link
+      to={`/auctions/${id}`}
+      aria-label={`View auction ${id}`}
+      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col"
+    >
       {/* Image Container */}
       <div className="relative h-48 bg-slate-50 flex items-center justify-center p-6 overflow-hidden">
         <img 
@@ -43,16 +49,11 @@ export const ProductCard = ({ id, model, type, price, priceLabel, image, isClose
         <h4 className="font-montserrat font-bold text-gray-800 text-sm line-clamp-1 mb-1">{model}</h4>
         <p className="text-slate-400 text-[10px] mb-4">{serial}</p>
 
-        <div className="mt-auto pt-3 border-t border-gray-50 flex justify-between items-end">
-          <div>
-            <p className="text-slate-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">{priceLabel}</p>
-            <p className="text-lg font-bold text-slate-900">€{price.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-          </div>
-          <button className="bg-teal-700 text-white p-2 rounded-xl hover:bg-teal-950 transition-colors">
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-          </button>
+        <div className="mt-auto pt-3 border-t border-gray-50">
+          <p className="text-slate-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">{priceLabel}</p>
+          <p className="text-lg font-bold text-slate-900">€{price.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
