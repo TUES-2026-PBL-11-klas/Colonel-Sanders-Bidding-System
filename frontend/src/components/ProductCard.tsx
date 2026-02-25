@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface ProductCardProps {
   id: number;
@@ -12,12 +12,14 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ id, model, type, price, priceLabel, image, isClosed, serial }: ProductCardProps) => {
+  const location = useLocation();
   const isOpen = !isClosed;
   const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
   return (
     <Link
       to={`/auctions/${id}`}
+      state={{ backgroundLocation: location }}
       aria-label={`View auction ${id}`}
       className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col"
     >

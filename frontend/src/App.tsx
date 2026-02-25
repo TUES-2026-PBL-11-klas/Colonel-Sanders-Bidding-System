@@ -6,7 +6,29 @@ import Bids from './components/Bids';
 import AllAuctions from './components/Auctions';
 import Auction from './components/Auction';
 import "./tailwind.css";
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+
+function AppRoutes() {
+  const location = useLocation();
+  const backgroundLocation = location.state?.backgroundLocation;
+
+  return (
+    <>
+      <Routes location={backgroundLocation || location}>
+        <Route path="/" element={<><Hero /><Dashboard /><Bids /></>} />
+        <Route path="/auctions" element={<AllAuctions />} />
+        <Route path="/auctions/:id" element={<Auction />} />
+        <Route path="/bids" element={<Bids />} />
+      </Routes>
+
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/auctions/:id" element={<Auction isModal />} />
+        </Routes>
+      )}
+    </>
+  );
+}
 
 function App() {
   return (
@@ -15,12 +37,7 @@ function App() {
         <Navbar />
         <main className="grow w-full">
           <div className="layout-16by9 px-4 sm:px-6 lg:px-8">
-            <Routes>
-              <Route path="/" element={<><Hero /><Dashboard /><Bids /></>} />
-              <Route path="/auctions" element={<AllAuctions />} />
-              <Route path="/auctions/:id" element={<Auction />} />
-              <Route path="/bids" element={<Bids />} />
-            </Routes>
+            <AppRoutes />
           </div>
         </main>
         <Footer />

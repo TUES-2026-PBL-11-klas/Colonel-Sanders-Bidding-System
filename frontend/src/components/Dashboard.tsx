@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { MOCK_PRODUCTS, MOCK_TYPES } from '../data/mock_data';
 
 export default function InventoryDashboard() {
+  const location = useLocation();
   const dashboardProducts = useMemo(() => {
     const shuffled = [...MOCK_PRODUCTS].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(5, shuffled.length));
@@ -114,6 +115,7 @@ export default function InventoryDashboard() {
             </div>
             <Link
               to={`/auctions/${current.id}`}
+              state={{ backgroundLocation: location }}
               className="bg-teal-700 text-white px-12 py-5 rounded-2xl font-bold text-base tracking-wide
                 transition-all duration-200 ease-in-out hover:bg-teal-950 hover:shadow-xl active:scale-95 w-full sm:w-auto text-center"
             >
