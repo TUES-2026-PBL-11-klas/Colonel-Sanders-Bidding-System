@@ -203,6 +203,22 @@ Should show `(healthy)` in the STATUS column. Wait 10-15 seconds after `docker-c
 docker-compose up --build --no-cache
 ```
 
+### Endpoints return 404 even though controllers exist
+
+If all API routes (for example `/api/products`) return `404`, the backend container may be running a stale image.
+
+Rebuild and restart the backend from the root compose file:
+
+```bash
+docker compose -f "C:\Users\User\Desktop\Colonel-Sanders-Bidding-System\docker-compose.yml" up -d --build backend
+```
+
+If you are already in the project root, you can also run:
+
+```bash
+docker compose up -d --build backend
+```
+
 ### View logs
 
 ```bash
