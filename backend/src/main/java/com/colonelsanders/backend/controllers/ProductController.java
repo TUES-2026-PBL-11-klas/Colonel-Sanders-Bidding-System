@@ -1,10 +1,13 @@
 package com.colonelsanders.backend.controllers;
 
+import com.colonelsanders.backend.database.models.Bid;
 import com.colonelsanders.backend.database.models.Product;
+import com.colonelsanders.backend.database.repositories.BidRepository;
 import com.colonelsanders.backend.database.repositories.ProductRepository;
 import com.colonelsanders.backend.dto.ProductImportResultDto;
 import com.colonelsanders.backend.services.ProductImageStorageService;
 import com.colonelsanders.backend.services.ProductImportService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +31,16 @@ public class ProductController {
     private final ProductImportService productImportService;
     private final ProductRepository productRepository;
     private final ProductImageStorageService productImageStorageService;
+    private final BidRepository bidRepository;
 
     public ProductController(ProductImportService productImportService,
                                    ProductRepository productRepository,
-                                   ProductImageStorageService productImageStorageService) {
+                                   ProductImageStorageService productImageStorageService,
+                                   BidRepository bidRepository) {
         this.productImportService = productImportService;
         this.productRepository = productRepository;
         this.productImageStorageService = productImageStorageService;
+        this.bidRepository = bidRepository;
     }
 
     @GetMapping(path = "/api/products")
@@ -135,5 +141,61 @@ public class ProductController {
                 ),
                 HttpStatus.OK
         );
+    }
+
+    @PostMapping(path = "/api/products/{id}/close", produces = "text/csv")
+    public ResponseEntity<?> closeAuction(@PathVariable("id") Long id) {
+        Optional<Product> foundProduct = productRepository.findById(id);
+        if (foundProduct.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Product product = foundProduct.get();
+        if (product.getClosed()) {
+            return new ResponseEntity<>(
+                    Map.of("error", "Auction is already closed"),
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        product.setClosed(true);
+        productRepository.save(product);
+
+        Optional<Bid> highestBid = bidRepository.findTopByProductIdOrderByPriceDesc(id);
+
+        String typeName = product.getProductType() != null ? product.getProductType().getName() : "";
+        String startingPrice = product.getStartingPrice() != null ? product.getStartingPrice().toPlainString() : "";
+        String bidderEmail = "";
+        String bidPrice = "";
+
+        if (highestBid.isPresent()) {
+            bidderEmail = highestBid.get().getAppUser().getEmail();
+            bidPrice = highestBid.get().getPrice().toPlainString();
+        }
+
+        String csv = "Type, model, sn, desc, st_price, email_of_highest_bidder, price_of_bid_of_highest_bidder\n"
+                + escapeCsv(typeName) + ", "
+                + escapeCsv(product.getModel()) + ", "
+                + escapeCsv(product.getSerial()) + ", "
+                + escapeCsv(product.getDescription()) + ", "
+                + startingPrice + ", "
+                + escapeCsv(bidderEmail) + ", "
+                + bidPrice + "\n";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"auction-result-" + id + ".csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 }
