@@ -17,14 +17,4 @@ public class UserImportResultDto {
     private int skipped;
     private int failed;
     private List<String> errors;
-    private List<CreatedUser> createdUsers;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class CreatedUser {
-        private String email;
-        private String generatedPassword;
-    }
 }

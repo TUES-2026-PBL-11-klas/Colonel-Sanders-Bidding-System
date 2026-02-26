@@ -27,10 +27,13 @@ public class UserImportService {
 
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    public UserImportService(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserImportService(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
+                             EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -40,7 +43,6 @@ public class UserImportService {
         int skipped = 0;
         int failed = 0;
         List<String> errors = new ArrayList<>();
-        List<UserImportResultDto.CreatedUser> createdUsers = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -82,11 +84,9 @@ public class UserImportService {
                     user.setRole(Role.USER);
                     userRepository.save(user);
 
-                    createdUsers.add(UserImportResultDto.CreatedUser.builder()
-                            .email(email)
-                            .generatedPassword(rawPassword)
-                            .build());
                     created++;
+
+                    emailService.sendCredentials(email, rawPassword);
                 } catch (Exception ex) {
                     failed++;
                     errors.add("Row " + lineNumber + ": " + ex.getMessage());
@@ -100,7 +100,6 @@ public class UserImportService {
                 .skipped(skipped)
                 .failed(failed)
                 .errors(errors)
-                .createdUsers(createdUsers)
                 .build();
     }
 

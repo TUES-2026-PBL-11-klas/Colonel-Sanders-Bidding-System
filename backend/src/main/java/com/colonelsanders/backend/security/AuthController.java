@@ -15,9 +15,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import com.colonelsanders.backend.services.UserImportService;
+import com.colonelsanders.backend.dto.UserImportResultDto;
+import com.colonelsanders.backend.database.models.AppUser;
+
+
 
 import com.colonelsanders.backend.security.JwtService;
-import com.colonelsanders.backend.database.models.AppUser;
 import com.colonelsanders.backend.database.models.Role;
 
 import java.io.IOException;
@@ -75,7 +86,6 @@ public class AuthController {
             UserImportResultDto result = UserImportResultDto.builder()
                     .processed(0).created(0).skipped(0).failed(0)
                     .errors(java.util.List.of("CSV file is required"))
-                    .createdUsers(java.util.List.of())
                     .build();
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
@@ -87,7 +97,6 @@ public class AuthController {
             UserImportResultDto result = UserImportResultDto.builder()
                     .processed(0).created(0).skipped(0).failed(0)
                     .errors(java.util.List.of("Failed to read CSV file"))
-                    .createdUsers(java.util.List.of())
                     .build();
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }

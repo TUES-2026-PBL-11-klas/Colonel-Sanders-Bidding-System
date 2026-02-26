@@ -73,7 +73,7 @@ Registered successfully
 ## 3) Import Users from CSV
 
 ### `POST /api/auth/import-users`
-Bulk-import users from a CSV file. Each line should contain one email address. Passwords are auto-generated.
+Bulk-import users from a CSV file. Each line should contain one email address. Passwords are auto-generated. **An email with login credentials is automatically sent to each newly created user via SMTP.**
 
 - **Auth required:** No
 - **Content-Type:** `multipart/form-data`
@@ -95,13 +95,11 @@ bob@example.com
   "created": 2,
   "skipped": 0,
   "failed": 0,
-  "errors": [],
-  "createdUsers": [
-    { "email": "alice@example.com", "generatedPassword": "aB3!xK9@mNp2" },
-    { "email": "bob@example.com", "generatedPassword": "Qr7#tY1&wZs4" }
-  ]
+  "errors": []
 }
 ```
+
+Credentials are sent via email to each created user automatically — they are **not** included in the response.
 
 - **Error responses:**
   - `400 Bad Request` when file is missing/empty
