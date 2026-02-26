@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -62,7 +63,7 @@ public class ProductImportService {
                     String productTypeName = required(record, "Type");
                     boolean closed = parseStatus(required(record, "status"));
                     String description = optional(record, "desc");
-                    optional(record, "st_price");
+                    BigDecimal startingPrice = parseStartingPrice(required(record, "st_price"));
 
                     ProductType productType = resolveProductType(productTypeName);
 
@@ -75,6 +76,7 @@ public class ProductImportService {
                     product.setDescription(description);
                     product.setClosed(closed);
                     product.setProductType(productType);
+                    product.setStartingPrice(startingPrice);
 
                     Timestamp now = Timestamp.from(Instant.now());
                     if (isNew) {
@@ -146,5 +148,13 @@ public class ProductImportService {
             return true;
         }
         throw new IllegalArgumentException("Field 'status' must be one of: open/closed, active/inactive, available/sold, 0/1");
+    }
+
+    private BigDecimal parseStartingPrice(String value) {
+        try {
+            return new BigDecimal(value);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Field 'st_price' must be a valid decimal number");
+        }
     }
 }
