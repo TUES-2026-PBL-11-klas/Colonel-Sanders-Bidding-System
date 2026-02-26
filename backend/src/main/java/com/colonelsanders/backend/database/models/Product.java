@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Entity
@@ -41,4 +42,9 @@ public class Product {
     private Timestamp updatedAt;
     @Getter @Setter
     private Timestamp actionEndDate;
+
+    // starting price for auctions
+    @Column(precision = 10, scale = 2)
+    @Getter @Setter
+    private BigDecimal startingPrice;
 }
