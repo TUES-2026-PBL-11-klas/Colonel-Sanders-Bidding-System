@@ -67,6 +67,7 @@ public class AuthController {
         user.setEmail(req.email());
         user.setPassword(passwordEncoder.encode(req.password()));
         user.setRole(Role.USER);
+        user.setNeedsPasswordReset(true);
         userRepository.save(user);
         return ResponseEntity.ok("Registered successfully");
     }
@@ -77,7 +78,16 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(req.email(), req.password()));
         var user = userRepository.findByEmail(req.email()).orElseThrow();
         String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token));
+        return ResponseEntity.ok(new AuthResponse(token, user.isNeedsPasswordReset()));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest req) {
+        var user = userRepository.findByEmail(req.email()).orElseThrow();
+        user.setPassword(passwordEncoder.encode(req.newPassword()));
+        user.setNeedsPasswordReset(false);
+        userRepository.save(user);
+        return ResponseEntity.ok("Password reset successfully");
     }
 
     @PostMapping(path = "/import-users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -121,4 +131,5 @@ public class AuthController {
 // used in testing, not exposed in production
 record RegisterRequest(String email, String password) {}
 record LoginRequest(String email, String password) {}
-record AuthResponse(String token) {}
+record AuthResponse(String token, boolean needsPasswordReset) {}
+record ResetPasswordRequest(String email, String newPassword) {}
