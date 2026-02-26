@@ -1,8 +1,13 @@
 package com.colonelsanders.backend.security;
 
 import com.colonelsanders.backend.database.repositories.AppUserRepository;
+import com.colonelsanders.backend.dto.UserImportResultDto;
+import com.colonelsanders.backend.services.UserImportService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +30,12 @@ import com.colonelsanders.backend.database.models.AppUser;
 
 import com.colonelsanders.backend.security.JwtService;
 import com.colonelsanders.backend.database.models.Role;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/api/auth")

@@ -281,6 +281,29 @@ curl -X POST "http://localhost:8080/api/auth/login" \
   -d '{"email":"user@example.com","password":"your-password"}'
 ```
 
+### Register
+```bash
+curl -X POST "http://localhost:8080/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"your-password"}'
+```
+
+### Import users CSV
+```bash
+curl -X POST "http://localhost:8080/api/auth/import-users" \
+  -F "file=@backend/sample-data/users-example.csv"
+```
+
+### Get all users
+```bash
+curl "http://localhost:8080/api/auth/users"
+```
+
+### Get user by id
+```bash
+curl "http://localhost:8080/api/auth/users/1"
+```
+
 ### Get all products
 ```bash
 curl "http://localhost:8080/api/products"
