@@ -28,6 +28,10 @@ public class AppUser implements UserDetails {
     @Getter @Setter
     private Role role;
 
+    @Column(nullable = false)
+    @Getter @Setter
+    private boolean needsPasswordReset = true;
+
     @Override public String getUsername() { return email; }
     @Override public String getPassword() { return password; }
     @Override public Collection<? extends GrantedAuthority> getAuthorities() {
