@@ -30,24 +30,30 @@ public class BidService {
     }
 
     public Bid createBid(BidRequestDto request, String userEmail) {
-        // Validate product exists
         Optional<Product> productOpt = productRepository.findById(request.getProductId());
         if (productOpt.isEmpty()) {
             throw new IllegalArgumentException("Product not found with id: " + request.getProductId());
         }
 
-        // Validate price
+        if (productOpt.get().getClosed() != null && productOpt.get().getClosed()) {
+            throw new IllegalArgumentException("Cannot bid on a closed product");
+        }
+
         if (request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Price must be greater than 0");
         }
 
-        // Get current user
+        if (productOpt.get().getStartingPrice() != null &&
+                request.getPrice().compareTo(productOpt.get().getStartingPrice()) < 0) {
+            throw new IllegalArgumentException("Price must be at least the starting price of "
+                    + productOpt.get().getStartingPrice());
+        }
+
         Optional<AppUser> userOpt = appUserRepository.findByEmail(userEmail);
         if (userOpt.isEmpty()) {
             throw new IllegalArgumentException("User not found");
         }
 
-        // Create bid
         Bid bid = new Bid();
         bid.setProduct(productOpt.get());
         bid.setAppUser(userOpt.get());
