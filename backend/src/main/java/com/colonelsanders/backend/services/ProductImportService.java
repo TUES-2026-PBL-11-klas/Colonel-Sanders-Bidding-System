@@ -47,6 +47,7 @@ public class ProductImportService {
              CSVParser parser = CSVFormat.DEFAULT.builder()
                      .setHeader()
                      .setIgnoreHeaderCase(true)
+                 .setIgnoreSurroundingSpaces(true)
                      .setSkipHeaderRecord(true)
                      .setTrim(true)
                      .build()
@@ -61,7 +62,6 @@ public class ProductImportService {
                     String serial = required(record, "sn");
                     String model = required(record, "model");
                     String productTypeName = required(record, "Type");
-                    boolean closed = parseStatus(required(record, "status"));
                     String description = optional(record, "desc");
                     BigDecimal startingPrice = parseStartingPrice(required(record, "st_price"));
 
@@ -74,7 +74,7 @@ public class ProductImportService {
                     product.setSerial(serial);
                     product.setModel(model);
                     product.setDescription(description);
-                    product.setClosed(closed);
+                    product.setClosed(false);
                     product.setProductType(productType);
                     product.setStartingPrice(startingPrice);
 
@@ -107,7 +107,7 @@ public class ProductImportService {
     }
 
     private void validateRequiredHeaders(Map<String, Integer> headers) {
-        List<String> requiredHeaders = List.of("Type", "model", "sn", "desc", "st_price", "status");
+        List<String> requiredHeaders = List.of("Type", "model", "sn", "desc", "st_price");
         for (String header : requiredHeaders) {
             if (!headers.containsKey(header)) {
                 throw new IllegalArgumentException("Missing required CSV header: " + header);
@@ -138,16 +138,6 @@ public class ProductImportService {
         }
         String value = record.get(field);
         return value == null || value.isBlank() ? null : value.trim();
-    }
-
-    private boolean parseStatus(String value) {
-        if ("open".equalsIgnoreCase(value) || "active".equalsIgnoreCase(value) || "available".equalsIgnoreCase(value) || "0".equals(value)) {
-            return false;
-        }
-        if ("closed".equalsIgnoreCase(value) || "sold".equalsIgnoreCase(value) || "inactive".equalsIgnoreCase(value) || "1".equals(value)) {
-            return true;
-        }
-        throw new IllegalArgumentException("Field 'status' must be one of: open/closed, active/inactive, available/sold, 0/1");
     }
 
     private BigDecimal parseStartingPrice(String value) {
