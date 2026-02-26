@@ -205,7 +205,7 @@ docker-compose up --build --no-cache
 
 ### Endpoints return 404 even though controllers exist
 
-If all API routes (for example `/api/products`) return `404`, the backend container may be running a stale image.
+If an API route (for example `/api/products`) returns `404`, the backend container may be running a stale image.
 
 Rebuild and restart the backend from the root compose file:
 

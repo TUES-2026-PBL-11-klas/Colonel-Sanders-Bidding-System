@@ -44,7 +44,106 @@ Authenticate a user by email/password and return a JWT token.
 
 ---
 
-## 2) Get All Products
+## 2) Register
+
+### `POST /api/auth/register`
+Create a single user account.
+
+- **Auth required:** No
+- **Request body:** JSON
+
+```json
+{
+  "email": "user@example.com",
+  "password": "your-password"
+}
+```
+
+- **Success response:** `200 OK`
+
+```
+Registered successfully
+```
+
+- **Error responses:**
+  - `400 Bad Request` when email is already in use
+
+---
+
+## 3) Import Users from CSV
+
+### `POST /api/auth/import-users`
+Bulk-import users from a CSV file. Each line should contain one email address. Passwords are auto-generated.
+
+- **Auth required:** No
+- **Content-Type:** `multipart/form-data`
+- **Form fields:**
+  - `file` (required) — CSV file (one email per line, optional `email` header)
+
+**Example CSV:**
+```
+email
+alice@example.com
+bob@example.com
+```
+
+- **Success response:** `200 OK`
+
+```json
+{
+  "processed": 2,
+  "created": 2,
+  "skipped": 0,
+  "failed": 0,
+  "errors": [],
+  "createdUsers": [
+    { "email": "alice@example.com", "generatedPassword": "aB3!xK9@mNp2" },
+    { "email": "bob@example.com", "generatedPassword": "Qr7#tY1&wZs4" }
+  ]
+}
+```
+
+- **Error responses:**
+  - `400 Bad Request` when file is missing/empty
+  - `500 Internal Server Error` when CSV read fails
+
+---
+
+## 4) Get All Users
+
+### `GET /api/auth/users`
+Returns all registered users.
+
+- **Auth required:** No
+- **Request body:** None
+- **Success response:** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "email": "alice@example.com",
+    "role": "USER"
+  }
+]
+```
+
+---
+
+## 5) Get User by ID
+
+### `GET /api/auth/users/{id}`
+Returns one user by ID.
+
+- **Auth required:** No
+- **Path params:**
+  - `id` (number) — User ID
+- **Success response:** `200 OK` (same user shape as above)
+- **Error response:** `404 Not Found` when user does not exist
+
+---
+
+## 6) Get All Products
 
 ### `GET /api/products`
 Returns all products.
@@ -75,7 +174,7 @@ Returns all products.
 
 ---
 
-## 3) Get Product by ID
+## 7) Get Product by ID
 
 ### `GET /api/products/{id}`
 Returns one product by ID.
@@ -88,7 +187,7 @@ Returns one product by ID.
 
 ---
 
-## 4) Import Products from CSV
+## 8) Import Products from CSV
 
 ### `POST /api/products/import`
 Imports/updates products from a CSV file.
@@ -116,7 +215,7 @@ Imports/updates products from a CSV file.
 
 ---
 
-## 5) Upload Product Image
+## 9) Upload Product Image
 
 ### `POST /api/products/{id}/image`
 Uploads an image for a product, stores object key, and returns a presigned URL.
@@ -144,7 +243,7 @@ Uploads an image for a product, stores object key, and returns a presigned URL.
 
 ---
 
-## 6) Get Product Image URL
+## 10) Get Product Image URL
 
 ### `GET /api/products/{id}/image-url`
 Returns a fresh presigned URL for the product image.
@@ -182,6 +281,29 @@ Returns a fresh presigned URL for the product image.
 curl -X POST "http://localhost:8080/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"your-password"}'
+```
+
+### Register
+```bash
+curl -X POST "http://localhost:8080/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"your-password"}'
+```
+
+### Import users CSV
+```bash
+curl -X POST "http://localhost:8080/api/auth/import-users" \
+  -F "file=@backend/sample-data/users-example.csv"
+```
+
+### Get all users
+```bash
+curl "http://localhost:8080/api/auth/users"
+```
+
+### Get user by id
+```bash
+curl "http://localhost:8080/api/auth/users/1"
 ```
 
 ### Get all products
