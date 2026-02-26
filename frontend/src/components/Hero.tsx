@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-function Hero() {
+export default function Hero() {
   const textRef = useRef(null)
   const [visible, setVisible] = useState(false)
 
@@ -84,14 +84,14 @@ function Hero() {
           }`}>
             Submit your blind bid and outsmart the competition. The ultimate private, fair, and high-stakes marketplace.
           </p>
+          
 
           <div className={`pt-4 border-t border-gray-100 w-full reveal-hidden ${visible ? 'animate-reveal d-4' : ''}`}>
              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-               
                <button 
-                 className="order-first lg:order-last bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
+                 className="order-first bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
                    transition-all duration-200 ease-in-out
-                   hover:bg-teal-950 hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none"
+                   hover:bg-teal-950 hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none cursor-pointer"
                  onClick={() => slowScrollBy(window.innerHeight * 0.6)}
                >
                  Take me to the dashboard
@@ -112,5 +112,3 @@ function Hero() {
     </>
   )
 }
-
-export default Hero

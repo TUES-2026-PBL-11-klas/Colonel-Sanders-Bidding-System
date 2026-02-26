@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-function Navbar() {
+export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -40,7 +40,7 @@ function Navbar() {
             </div>
             <div className="border-l border-white/20 h-5 md:h-6"></div>
             <a href="/auctions" className="hover:text-teal-200 transition">Auctions</a>
-            <a href="/my-bids" className="hover:text-teal-200 transition">My Bids</a>
+            <a href="/bids" className="hover:text-teal-200 transition">My Bids</a>
           </div>
 
           {/* Logo - Centered on Mobile */}
@@ -67,7 +67,7 @@ function Navbar() {
         {isOpen && (
           <div className="md:hidden bg-teal-900 border-t border-teal-700 px-4 py-3 rounded-b-md animate-in fade-in slide-in-from-top-2 duration-200">
             <a href="/auctions" className="block py-1 hover:text-teal-200 transition">Auctions</a>
-            <a href="/my-bids" className="block py-1 hover:text-teal-200 transition">My Bids</a>
+            <a href="/bids" className="block py-1 hover:text-teal-200 transition">My Bids</a>
             <div className="border-t border-white/20 my-3"></div>
             <a href="/login" className="block py-1 hover:text-teal-200 transition">Login</a>
           </div>
@@ -79,5 +79,3 @@ function Navbar() {
     </>
   );
 }
-
-export default Navbar;

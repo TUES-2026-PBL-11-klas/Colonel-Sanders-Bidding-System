@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { MOCK_PRODUCTS, MOCK_TYPES } from '../data/mock_data';
 
 export default function InventoryDashboard() {
+  const location = useLocation();
   const dashboardProducts = useMemo(() => {
     const shuffled = [...MOCK_PRODUCTS].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(5, shuffled.length));
@@ -45,12 +47,12 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
+    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl mb-0">
       
       {/* Minimalist Navigation Header */}
       <div className="w-full max-w-7xl flex justify-between items-center mb-6 lg:mb-10 px-4 sm:px-2">
         <div className="flex flex-col">
-          <h2 className="text-xl lg:text-3xl font-bold text-gray-800 font-montserrat">Current <span className="text-teal-700">Dsicovery Dashboard</span></h2>
+          <h2 className="text-xl lg:text-3xl font-bold text-gray-800 font-montserrat">Current <span className="text-teal-700">Discovery Dashboard</span></h2>
         </div>
         
         <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
@@ -111,13 +113,14 @@ export default function InventoryDashboard() {
               </p>
               <p className="text-[10px] font-mono text-slate-300 mt-1 uppercase">ID: {current.serial}</p>
             </div>
-
-            <button 
-              className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-bold text-sm tracking-wide
-                transition-all duration-200 ease-in-out hover:bg-teal-950 hover:shadow-xl active:scale-95 w-full sm:w-auto"
+            <Link
+              to={`/auctions/${current.id}`}
+              state={{ backgroundLocation: location }}
+              className="bg-teal-700 text-white px-12 py-5 rounded-2xl font-bold text-base tracking-wide
+                transition-all duration-200 ease-in-out hover:bg-teal-950 hover:shadow-xl active:scale-95 w-full sm:w-auto text-center"
             >
               Details
-            </button>
+            </Link>
           </div>
 
         </div>

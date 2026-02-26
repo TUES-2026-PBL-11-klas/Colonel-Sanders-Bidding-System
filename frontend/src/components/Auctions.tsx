@@ -1,4 +1,4 @@
-import { ProductCard } from "../components/ProductCard";
+import { ProductCard } from "./ProductCard";
 import { MOCK_PRODUCTS, MOCK_TYPES } from "../data/mock_data";
 
 export default function AllAuctions() {
