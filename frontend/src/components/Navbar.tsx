@@ -9,6 +9,7 @@ export default function Navbar() {
   const [userEmail, setUserEmail] = useState('');
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileAccountMenuRef = useRef<HTMLDivElement | null>(null);
 
   const parseTokenEmail = (token: string): string => {
     try {
@@ -82,9 +83,13 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const targetNode = event.target as Node;
+      const clickedDesktopMenu = accountMenuRef.current?.contains(targetNode);
+      const clickedMobileMenu = mobileAccountMenuRef.current?.contains(targetNode);
+
       if (
-        accountMenuRef.current &&
-        !accountMenuRef.current.contains(event.target as Node)
+        !clickedDesktopMenu &&
+        !clickedMobileMenu
       ) {
         setIsAccountMenuOpen(false);
       }
@@ -139,7 +144,10 @@ export default function Navbar() {
                     <a
                       href="/user"
                       className="block px-4 py-2 text-sm hover:bg-gray-100"
-                      onClick={() => setIsAccountMenuOpen(false)}
+                      onClick={() => {
+                        setIsAccountMenuOpen(false);
+                        setIsOpen(false);
+                      }}
                     >
                       User Page
                     </a>
@@ -175,7 +183,7 @@ export default function Navbar() {
               <a href="/login" className="block py-1 hover:text-teal-200 transition">Login</a>
             )}
             {isLoggedIn && (
-              <div>
+              <div ref={mobileAccountMenuRef}>
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((prev) => !prev)}
@@ -188,7 +196,10 @@ export default function Navbar() {
                     <a
                       href="/user"
                       className="block py-1 hover:text-teal-200 transition"
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        setIsAccountMenuOpen(false);
+                        setIsOpen(false);
+                      }}
                     >
                       User Page
                     </a>
