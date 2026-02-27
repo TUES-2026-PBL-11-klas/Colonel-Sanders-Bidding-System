@@ -54,9 +54,19 @@ public class BidService {
             throw new IllegalArgumentException("User not found");
         }
 
-        Bid bid = new Bid();
-        bid.setProduct(productOpt.get());
-        bid.setAppUser(userOpt.get());
+        AppUser user = userOpt.get();
+        Product product = productOpt.get();
+
+        Optional<Bid> existingBid = bidRepository.findByProductIdAndAppUserId(product.getId(), user.getId());
+        Bid bid;
+
+        if (existingBid.isPresent()) {
+            throw new IllegalArgumentException("You have already placed a bid on this product");
+        }
+
+        bid = new Bid();
+        bid.setProduct(product);
+        bid.setAppUser(user);
         bid.setPrice(request.getPrice());
         bid.setCreatedAt(Timestamp.from(Instant.now()));
 
