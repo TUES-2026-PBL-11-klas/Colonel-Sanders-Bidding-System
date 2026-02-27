@@ -4,8 +4,57 @@ import { auctionsService } from "../services/auctionsService";
 import type { Auction } from "../services/auctionsService";
 import { authService } from "../services/authService";
 
-const FALLBACK_IMAGE = "/images/HeroGraphic.png";
+const FALLBACK_IMAGE = "/images/default-image.png";
 const API_BASE_URL = "http://localhost:8080/api";
+const AUCTION_GALLERY_STORAGE_KEY = "auction-image-gallery";
+
+const mergeImages = (...imageGroups: (string[] | undefined)[]) => {
+  const allImages = imageGroups.flatMap((group) => group ?? []).map((image) => image.trim()).filter((image) => image.length > 0);
+  const seen = new Set<string>();
+  const merged: string[] = [];
+
+  for (const image of allImages) {
+    const dedupeKey = image.split("?")[0];
+    if (seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    merged.push(image);
+  }
+
+  return merged;
+};
+
+const getStoredAuctionGallery = (): Record<string, string[]> => {
+  try {
+    const raw = localStorage.getItem(AUCTION_GALLERY_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, string[]>;
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+
+    return parsed;
+  } catch {
+    return {};
+  }
+};
+
+const getAuctionImages = (auction: Auction) => {
+  const storedGallery = getStoredAuctionGallery();
+  const storedImages = storedGallery[String(auction.id)] ?? [];
+  const images = mergeImages([auction.imageUrl ?? ""], storedImages);
+
+  if (images.length === 0) {
+    return [FALLBACK_IMAGE];
+  }
+
+  return images;
+};
 
 export default function AllAuctions() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -297,7 +346,7 @@ export default function AllAuctions() {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50/30 py-12 px-0">
+    <div className="min-h-screen bg-blue-50/30 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto w-full">
         <header className="mb-16 text-left w-full">
           <h2 className="font-montserrat text-3xl lg:text-4xl font-bold text-gray-800">
@@ -306,9 +355,9 @@ export default function AllAuctions() {
           <p className="text-gray-500 mt-2">Browse all high-stakes private listings.</p>
         </header>
 
-        <section className="mb-8 bg-white p-4 md:p-4 rounded-2xl shadow-md w-full">
+        <section className="mb-8 bg-white p-4 rounded-2xl shadow-md w-full">
           <div className="flex flex-col gap-8 max-w-5xl mx-auto w-full">
-            <div className="flex flex-wrap items-end justify-center gap-8 w-full">
+            <div className="flex flex-wrap items-end justify-center gap-4 sm:gap-6 w-full">
               <div className="flex flex-col items-center gap-2">
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
@@ -316,7 +365,7 @@ export default function AllAuctions() {
                   onChange={(event) => setSelectedType(event.target.value)}
                   className="h-9 border border-gray-300 rounded-md px-3 text-sm min-w-28 text-gray-700"
                 >
-                  <option value="none">None</option>
+                  <option value="all">All</option>
                   {availableTypes.map((typeName) => (
                     <option key={typeName} value={typeName}>
                       {typeName}
@@ -383,8 +432,8 @@ export default function AllAuctions() {
         </section>
 
         {canCloseAuctions && (
-          <section className="mb-8 w-full px-8">
-            <div className="w-full flex items-center justify-between gap-4">
+          <section className="mb-8 w-full">
+            <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <label className="inline-flex items-center gap-3 text-base font-medium text-gray-700 select-none px-4">
                 <input
                   type="checkbox"
@@ -399,14 +448,14 @@ export default function AllAuctions() {
                 type="button"
                 onClick={handleCloseSelected}
                 disabled={isClosingSelected || selectedAuctionIds.length === 0}
-                className="h-11 bg-teal-700 text-white border border-teal-700 px-6 text-base rounded-md whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-11 w-full sm:w-auto bg-teal-700 text-white border border-teal-700 px-6 text-base rounded-md whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isClosingSelected ? "Closing..." : "Close Selected Auctions"}
               </button>
             </div>
 
-            {closeMessage && <p className="text-green-700 mt-3 text-right">{closeMessage}</p>}
-            {closeError && <p className="text-red-600 mt-3 text-right">{closeError}</p>}
+            {closeMessage && <p className="text-green-700 mt-3 text-left sm:text-right">{closeMessage}</p>}
+            {closeError && <p className="text-red-600 mt-3 text-left sm:text-right">{closeError}</p>}
           </section>
         )}
 
@@ -416,16 +465,24 @@ export default function AllAuctions() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
           {filteredAuctions.map((item) => (
             <div key={item.id} className="relative">
+              {(() => {
+                const selectedImage = getAuctionImages(item)[0] ?? FALLBACK_IMAGE;
+
+                return (
+                  <>
               <ProductCard
                 id={item.id}
                 model={item.model}
                 serial={item.serial}
                 type={item.productType?.name ?? "Unknown Type"}
-                image={item.imageObjectKey ?? FALLBACK_IMAGE}
+                image={selectedImage}
                 price={item.startingPrice}
                 priceLabel="Starting Price"
                 isClosed={item.closed}
               />
+                  </>
+                );
+              })()}
               {canCloseAuctions && !item.closed && (
                 <label
                   className="absolute top-11 left-3 z-30 inline-flex items-center justify-center h-6 w-6 rounded-md bg-white/95 border border-gray-300 shadow-sm cursor-pointer"
@@ -464,7 +521,7 @@ export default function AllAuctions() {
                 type="button"
                 onClick={handleAuctionsCsvUpload}
                 disabled={isUploadingAuctionsCsv || !auctionsCsvFile}
-                className="h-12 bg-teal-700 text-white border border-teal-700 px-8 text-base rounded-md min-w-56 whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 w-full sm:w-auto bg-teal-700 text-white border border-teal-700 px-8 text-base rounded-md sm:min-w-56 whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploadingAuctionsCsv ? "Uploading..." : "Upload Auctions CSV"}
               </button>

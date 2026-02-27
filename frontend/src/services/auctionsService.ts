@@ -31,6 +31,20 @@ export interface Bid {
 	price: number
 }
 
+export interface AuctionImportResult {
+	processed: number
+	created: number
+	updated: number
+	failed: number
+	errors: string[]
+}
+
+export interface AuctionImageUploadResult {
+	productId: string
+	imageObjectKey: string
+	imageUrl: string
+}
+
 const buildAuthHeaders = () => {
 	const token = authService.getToken()
 
@@ -65,7 +79,15 @@ export const auctionsService = {
 			return parseError(response)
 		}
 
-		return response.json()
+		const auctions: Auction[] = await response.json()
+		const auctionsWithImageUrls = await Promise.all(
+			auctions.map(async (auction) => ({
+				...auction,
+				imageUrl: await this.getAuctionImageUrl(auction.id),
+			}))
+		)
+
+		return auctionsWithImageUrls
 	},
 
 	async getAuctionById(id: number): Promise<Auction> {
@@ -79,7 +101,35 @@ export const auctionsService = {
 			return parseError(response)
 		}
 
-		return response.json()
+		const auction: Auction = await response.json()
+		const imageUrl = await this.getAuctionImageUrl(id)
+
+		return {
+			...auction,
+			imageUrl,
+		}
+	},
+
+	async getAuctionImageUrl(id: number): Promise<string | null> {
+		const token = authService.getToken()
+		const response = await fetch(`${API_BASE_URL}/products/${id}/image-url`, {
+			method: 'GET',
+			headers: {
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			credentials: 'include',
+		})
+
+		if (response.status === 404) {
+			return null
+		}
+
+		if (!response.ok) {
+			return parseError(response)
+		}
+
+		const payload = (await response.json()) as { imageUrl?: string }
+		return payload.imageUrl ?? null
 	},
 
 	async getOpenAuctions(): Promise<Auction[]> {
@@ -117,5 +167,47 @@ export const auctionsService = {
 		}
 
 		return response.blob()
+	},
+
+	async importAuctionsCsv(file: File): Promise<AuctionImportResult> {
+		const formData = new FormData()
+		formData.append('file', file)
+
+		const token = authService.getToken()
+		const response = await fetch(`${API_BASE_URL}/products/import`, {
+			method: 'POST',
+			headers: {
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			credentials: 'include',
+			body: formData,
+		})
+
+		if (!response.ok) {
+			return parseError(response)
+		}
+
+		return response.json()
+	},
+
+	async uploadAuctionImage(productId: number, file: File): Promise<AuctionImageUploadResult> {
+		const formData = new FormData()
+		formData.append('file', file)
+
+		const token = authService.getToken()
+		const response = await fetch(`${API_BASE_URL}/products/${productId}/image`, {
+			method: 'POST',
+			headers: {
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			credentials: 'include',
+			body: formData,
+		})
+
+		if (!response.ok) {
+			return parseError(response)
+		}
+
+		return response.json()
 	},
 }

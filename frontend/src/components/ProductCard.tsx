@@ -24,11 +24,11 @@ export const ProductCard = ({ id, model, type, price, priceLabel, image, isClose
       className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col"
     >
       {/* Image Container */}
-      <div className="relative h-48 bg-slate-50 flex items-center justify-center p-6 overflow-hidden">
+      <div className="relative h-48 bg-slate-50 overflow-hidden">
         <img 
           src={image} 
           alt={model} 
-          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         
         {/* Status Badge */}
