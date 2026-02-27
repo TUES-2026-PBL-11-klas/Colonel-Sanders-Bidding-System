@@ -72,4 +72,12 @@ public class BidService {
 
         return bidRepository.save(bid);
     }
+
+    /**
+     * Retrieve every bid stored in the system. Mostly used by administrators
+     * or for diagnostics; the controller is responsible for mapping to DTOs.
+     */
+    public Iterable<Bid> getAllBids() {
+        return bidRepository.findAll();
+    }
 }
