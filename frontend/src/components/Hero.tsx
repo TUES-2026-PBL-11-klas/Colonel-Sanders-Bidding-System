@@ -89,7 +89,7 @@ export default function Hero() {
           <div className={`pt-4 border-t border-gray-100 w-full reveal-hidden ${visible ? 'animate-reveal d-4' : ''}`}>
              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                <button 
-                 className="order-first bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
+                 className="order-last bg-teal-700 text-white px-8 lg:px-7 py-3 lg:py-3 rounded-2xl font-semibold text-base lg:text-base w-full lg:w-auto
                    transition-all duration-200 ease-in-out
                    hover:bg-teal-950 hover:scale-105 active:scale-95 hover:shadow-lg focus:outline-none cursor-pointer"
                  onClick={() => slowScrollBy(window.innerHeight * 0.6)}
@@ -97,7 +97,7 @@ export default function Hero() {
                  Take me to the dashboard
                </button>
 
-               <div className="order-last lg:order-first">
+               <div className="order-first lg:order-first">
                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Trusted by users at</p>
                  <div className="flex gap-4 lg:gap-6 opacity-30 grayscale items-center">
                     <span className="font-bold text-xs lg:text-sm tracking-tighter">TUES</span>

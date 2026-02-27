@@ -11,7 +11,7 @@ export default function Login() {
     }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-blue-50">
+    <div className="flex items-center justify-center py-20 bg-blue-50">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Login to CrispyBid</h2>
         <div className="mb-4">
