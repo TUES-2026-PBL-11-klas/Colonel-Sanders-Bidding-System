@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+minio:
+  url: ${MINIO_ENDPOINT}
+  public-url: ${MINIO_PUBLIC_URL:${MINIO_ENDPOINT}}
+  access:
+    name: ${MINIO_ACCESS_KEY}
+    secret: ${MINIO_SECRET_KEY}
+  bucket:
+    name: ${MINIO_BUCKET}
+  url-expiry-seconds: ${MINIO_URL_EXPIRY_SECONDS}
