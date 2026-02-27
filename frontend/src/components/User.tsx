@@ -128,8 +128,8 @@ export default function User() {
               {isUploadingUsersCsv ? 'Uploading...' : 'Upload Users CSV'}
             </button>
           </div>
-          {importMessage && <p className="text-green-700 mt-3">{importMessage}</p>}
-          {importError && <p className="text-red-600 mt-3">{importError}</p>}
+          {importMessage && <p className="text-green-700 mt-3 text-center max-w-2xl mx-auto">{importMessage}</p>}
+          {importError && <p className="text-red-600 mt-3 text-center max-w-2xl mx-auto">{importError}</p>}
         </div>
       </div>
     </div>

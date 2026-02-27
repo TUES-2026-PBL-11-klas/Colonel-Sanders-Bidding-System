@@ -126,8 +126,8 @@ export default function AllAuctions() {
               {isUploadingAuctionsCsv ? "Uploading..." : "Upload Auctions CSV"}
             </button>
           </div>
-          {importMessage && <p className="text-green-700 mt-3">{importMessage}</p>}
-          {importError && <p className="text-red-500 mt-3">{importError}</p>}
+          {importMessage && <p className="text-green-700 mt-3 text-center max-w-2xl mx-auto">{importMessage}</p>}
+          {importError && <p className="text-red-500 mt-3 text-center max-w-2xl mx-auto">{importError}</p>}
         </section>
       </div>
     </div>
