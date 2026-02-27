@@ -16,6 +16,14 @@ export interface LoginResponse {
   }
 }
 
+export interface UserImportResult {
+  processed: number
+  created: number
+  skipped: number
+  failed: number
+  errors: string[]
+}
+
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -54,5 +62,30 @@ export const authService = {
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY)
+  },
+
+  async importUsersCsv(file: File): Promise<UserImportResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch(`${API_BASE_URL}/auth/import-users`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      let message = 'User CSV import failed'
+
+      try {
+        const error = await response.json()
+        message = error.message || error.error || message
+      } catch {
+        // keep default message
+      }
+
+      throw new Error(message)
+    }
+
+    return response.json()
   },
 }
