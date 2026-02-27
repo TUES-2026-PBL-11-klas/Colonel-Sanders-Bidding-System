@@ -44,33 +44,8 @@ Authenticate a user by email/password and return a JWT token.
 
 ---
 
-## 2) Register
 
-### `POST /api/auth/register`
-Create a single user account.
-
-- **Auth required:** No
-- **Request body:** JSON
-
-```json
-{
-  "email": "user@example.com",
-  "password": "your-password"
-}
-```
-
-- **Success response:** `200 OK`
-
-```
-Registered successfully
-```
-
-- **Error responses:**
-  - `400 Bad Request` when email is already in use
-
----
-
-## 3) Import Users from CSV
+## 2) Import Users from CSV
 
 ### `POST /api/auth/import-users`
 Bulk-import users from a CSV file. Each line should contain one email address. Passwords are auto-generated. **An email with login credentials is automatically sent to each newly created user via SMTP.**
@@ -107,7 +82,7 @@ Credentials are sent via email to each created user automatically — they are *
 
 ---
 
-## 4) Get All Users
+## 3) Get All Users
 
 ### `GET /api/auth/users`
 Returns all registered users.
@@ -128,7 +103,7 @@ Returns all registered users.
 
 ---
 
-## 5) Get User by ID
+## 4) Get User by ID
 
 ### `GET /api/auth/users/{id}`
 Returns one user by ID.
@@ -281,12 +256,7 @@ curl -X POST "http://localhost:8080/api/auth/login" \
   -d '{"email":"user@example.com","password":"your-password"}'
 ```
 
-### Register
-```bash
-curl -X POST "http://localhost:8080/api/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"your-password"}'
-```
+
 
 ### Import users CSV
 ```bash

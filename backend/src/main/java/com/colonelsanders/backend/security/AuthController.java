@@ -57,20 +57,6 @@ public class AuthController {
         this.userImportService = userImportService;
     }
 
-    // used in testing, not exposed in production
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest req) {
-        if (userRepository.findByEmail(req.email()).isPresent()) {
-            return ResponseEntity.badRequest().body("Email already in use");
-        }
-        var user = new AppUser();
-        user.setEmail(req.email());
-        user.setPassword(passwordEncoder.encode(req.password()));
-        user.setRole(Role.USER);
-        user.setNeedsPasswordReset(true);
-        userRepository.save(user);
-        return ResponseEntity.ok("Registered successfully");
-    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
@@ -128,8 +114,7 @@ public class AuthController {
 
 // Records for request/response bodies
 
-// used in testing, not exposed in production
-record RegisterRequest(String email, String password) {}
+
 record LoginRequest(String email, String password) {}
 record AuthResponse(String token, boolean needsPasswordReset) {}
 record ResetPasswordRequest(String email, String newPassword) {}
