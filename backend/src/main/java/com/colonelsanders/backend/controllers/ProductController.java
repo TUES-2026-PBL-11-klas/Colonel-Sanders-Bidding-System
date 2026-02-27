@@ -4,7 +4,9 @@ import com.colonelsanders.backend.database.models.Bid;
 import com.colonelsanders.backend.database.models.Product;
 import com.colonelsanders.backend.database.repositories.BidRepository;
 import com.colonelsanders.backend.database.repositories.ProductRepository;
+import com.colonelsanders.backend.dto.ProductDto;
 import com.colonelsanders.backend.dto.ProductImportResultDto;
+import com.colonelsanders.backend.mappers.ProductMapper;
 import com.colonelsanders.backend.services.ProductImageStorageService;
 import com.colonelsanders.backend.services.ProductImportService;
 import org.springframework.http.HttpHeaders;
@@ -32,27 +34,31 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ProductImageStorageService productImageStorageService;
     private final BidRepository bidRepository;
+    private final ProductMapper productMapper;
 
     public ProductController(ProductImportService productImportService,
                                    ProductRepository productRepository,
                                    ProductImageStorageService productImageStorageService,
-                                   BidRepository bidRepository) {
+                                   BidRepository bidRepository,
+                                   ProductMapper productMapper) {
         this.productImportService = productImportService;
         this.productRepository = productRepository;
         this.productImageStorageService = productImageStorageService;
         this.bidRepository = bidRepository;
+        this.productMapper = productMapper;
     }
 
     @GetMapping(path = "/api/products")
-    public List<Product> findAll() {
+    public List<ProductDto> findAll() {
         return StreamSupport.stream(productRepository.findAll().spliterator(), false)
+                .map(productMapper::mapTo)
                 .collect(Collectors.toList());
     }
 
     @GetMapping(path = "/api/products/{id}")
-    public ResponseEntity<Product> findById(@PathVariable("id") Long id) {
-        Optional<Product> foundProduct = productRepository.findById(id);
-        return foundProduct.map(product -> new ResponseEntity<>(product, HttpStatus.OK))
+    public ResponseEntity<ProductDto> findById(@PathVariable("id") Long id) {
+        return productRepository.findById(id)
+                .map(product -> new ResponseEntity<>(productMapper.mapTo(product), HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -155,7 +161,7 @@ public class ProductController {
         product.setClosed(true);
         productRepository.save(product);
 
-        return new ResponseEntity<>(product, HttpStatus.OK);
+        return new ResponseEntity<>(productMapper.mapTo(product), HttpStatus.OK);
     }
 
     @GetMapping(path = "/api/products/{id}/export", produces = "text/csv")

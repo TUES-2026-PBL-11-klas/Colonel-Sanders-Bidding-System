@@ -60,6 +60,9 @@ dependencies {
 
     // Email
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // ModelMapper
+    implementation 'org.modelmapper:modelmapper:3.2.1'
 }
 
 

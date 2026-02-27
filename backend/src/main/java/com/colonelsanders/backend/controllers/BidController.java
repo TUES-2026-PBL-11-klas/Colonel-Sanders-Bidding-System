@@ -1,7 +1,9 @@
 package com.colonelsanders.backend.controllers;
 
 import com.colonelsanders.backend.database.models.Bid;
+import com.colonelsanders.backend.dto.BidDto;
 import com.colonelsanders.backend.dto.BidRequestDto;
+import com.colonelsanders.backend.mappers.BidMapper;
 import com.colonelsanders.backend.services.BidService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class BidController {
 
     private final BidService bidService;
+    private final BidMapper bidMapper;
 
-    public BidController(BidService bidService) {
+    public BidController(BidService bidService, BidMapper bidMapper) {
         this.bidService = bidService;
+        this.bidMapper = bidMapper;
     }
 
     @PostMapping(path = "/api/bids")
@@ -33,7 +37,8 @@ public class BidController {
 
             String userEmail = authentication.getName();
             Bid createdBid = bidService.createBid(request, userEmail);
-            return new ResponseEntity<>(createdBid, HttpStatus.CREATED);
+            BidDto bidDto = bidMapper.mapTo(createdBid);
+            return new ResponseEntity<>(bidDto, HttpStatus.CREATED);
         } catch (IllegalArgumentException ex) {
             return new ResponseEntity<>(
                     java.util.Map.of("error", ex.getMessage()),

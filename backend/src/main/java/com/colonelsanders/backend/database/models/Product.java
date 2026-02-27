@@ -40,8 +40,6 @@ public class Product {
     private Timestamp createdAt;
     @Getter @Setter
     private Timestamp updatedAt;
-    @Getter @Setter
-    private Timestamp actionEndDate;
 
     // starting price for auctions
     @Column(precision = 10, scale = 2)
