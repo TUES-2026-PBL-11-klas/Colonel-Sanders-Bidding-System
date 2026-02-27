@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface BidRepository extends CrudRepository<Bid, Long> {
     Optional<Bid> findTopByProductIdOrderByPriceDesc(Long productId);
+    Optional<Bid> findByProductIdAndAppUserId(Long productId, Long appUserId);
 }
