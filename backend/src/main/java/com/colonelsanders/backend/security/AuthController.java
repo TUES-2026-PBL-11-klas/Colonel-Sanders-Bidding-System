@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -96,6 +97,19 @@ public class AuthController {
                     .build();
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // simple logout; the request must supply the token in Authorization header
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        jwtService.revokeToken(token);
+        return ResponseEntity.ok("Logged out successfully");
     }
 
 }

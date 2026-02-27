@@ -24,6 +24,14 @@ public class JwtService {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
+    private final java.util.concurrent.ConcurrentMap<String, Date> revokedTokens =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void revokeToken(String token) {
+        Date exp = parseClaims(token).getExpiration();
+        revokedTokens.put(token, exp);
+    }
+
     public String generateToken(UserDetails user) {
         return Jwts.builder()
                 .subject(user.getUsername())
@@ -42,6 +50,12 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails user) {
+        revokedTokens.entrySet().removeIf(e -> e.getValue().before(new Date()));
+
+        if (revokedTokens.containsKey(token)) {
+            return false;
+        }
+
         return extractUsername(token).equals(user.getUsername())
                 && !parseClaims(token).getExpiration().before(new Date());
     }
