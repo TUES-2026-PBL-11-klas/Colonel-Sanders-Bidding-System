@@ -143,7 +143,7 @@ public class ProductController {
         );
     }
 
-    @PostMapping(path = "/api/products/{id}/close", produces = "text/csv")
+    @PostMapping(path = "/api/products/{id}/close")
     public ResponseEntity<?> closeAuction(@PathVariable("id") Long id) {
         Optional<Product> foundProduct = productRepository.findById(id);
         if (foundProduct.isEmpty()) {
@@ -151,23 +151,11 @@ public class ProductController {
         }
 
         Product product = foundProduct.get();
-        if (product.getClosed()) {
-            return new ResponseEntity<>(
-                    Map.of("error", "Auction is already closed"),
-                    HttpStatus.BAD_REQUEST);
-        }
 
         product.setClosed(true);
         productRepository.save(product);
 
-        String csv = buildProductCsv(id, product);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"auction-result-" + id + ".csv\"");
-        headers.setContentType(MediaType.parseMediaType("text/csv"));
-
-        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     @GetMapping(path = "/api/products/{id}/export", produces = "text/csv")

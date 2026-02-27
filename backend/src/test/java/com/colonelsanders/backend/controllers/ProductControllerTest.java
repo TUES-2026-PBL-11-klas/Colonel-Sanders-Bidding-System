@@ -119,4 +119,34 @@ public class ProductControllerTest {
                 .andExpect(jsonPath("$.imageObjectKey").value("obj-key"))
                 .andExpect(jsonPath("$.imageUrl").value("http://url"));
     }
+
+    @Test
+    void closeAuction_notFound_returnsNotFound() throws Exception {
+        when(productRepository.findById(10L)).thenReturn(Optional.empty());
+        mvc.perform(post("/api/products/10/close"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void closeAuction_alreadyClosed_returnsBadRequest() throws Exception {
+        Product p = new Product();
+        p.setId(11L);
+        p.setClosed(true);
+        when(productRepository.findById(11L)).thenReturn(Optional.of(p));
+        mvc.perform(post("/api/products/11/close"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Auction is already closed"));
+    }
+
+    @Test
+    void closeAuction_success_setsClosed() throws Exception {
+        Product p = new Product();
+        p.setId(12L);
+        p.setClosed(false);
+        when(productRepository.findById(12L)).thenReturn(Optional.of(p));
+
+        mvc.perform(post("/api/products/12/close"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.closed").value(true));
+    }
 }
