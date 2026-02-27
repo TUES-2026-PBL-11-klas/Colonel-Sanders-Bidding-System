@@ -21,6 +21,14 @@ export interface Auction {
 	actionEndDate?: string
 }
 
+export interface Bid {
+	id: number
+	productId: number
+	appUserId: number
+	appUserEmail: string
+	price: number
+}
+
 const buildAuthHeaders = () => {
 	const token = authService.getToken()
 
@@ -35,7 +43,7 @@ async function parseError(response: Response): Promise<never> {
 
 	try {
 		const error = await response.json()
-		message = error.message || message
+		message = error.message || error.error || message
 	} catch {
 		// keep default message when body is not JSON
 	}
@@ -75,5 +83,20 @@ export const auctionsService = {
 	async getOpenAuctions(): Promise<Auction[]> {
 		const auctions = await this.getAuctions()
 		return auctions.filter((auction) => !auction.closed)
+	},
+
+	async placeBid(productId: number, price: number): Promise<Bid> {
+		const response = await fetch(`${API_BASE_URL}/bids`, {
+			method: 'POST',
+			headers: buildAuthHeaders(),
+			credentials: 'include',
+			body: JSON.stringify({ productId, price }),
+		})
+
+		if (!response.ok) {
+			return parseError(response)
+		}
+
+		return response.json()
 	},
 }
