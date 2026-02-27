@@ -164,6 +164,25 @@ public class ProductController {
         return new ResponseEntity<>(productMapper.mapTo(product), HttpStatus.OK);
     }
 
+    @GetMapping(path = "/api/products/export", produces = "text/csv")
+    public ResponseEntity<?> exportAllProductsCsv() {
+        List<Product> products = StreamSupport
+                .stream(productRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("type, model, serial, description, starting price, email, final price\n");
+        for (Product product : products) {
+            appendProductRow(sb, product);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"products.csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+
+        return new ResponseEntity<>(sb.toString(), headers, HttpStatus.OK);
+    }
+
     @GetMapping(path = "/api/products/{id}/export", produces = "text/csv")
     public ResponseEntity<?> exportProductCsv(@PathVariable("id") Long id) {
         Optional<Product> foundProduct = productRepository.findById(id);
@@ -183,7 +202,14 @@ public class ProductController {
     }
 
     private String buildProductCsv(Long id, Product product) {
-        Optional<Bid> highestBid = bidRepository.findTopByProductIdOrderByPriceDesc(id);
+        StringBuilder sb = new StringBuilder();
+        sb.append("type, model, serial, description, starting price, email, final price\n");
+        appendProductRow(sb, product);
+        return sb.toString();
+    }
+
+    private void appendProductRow(StringBuilder sb, Product product) {
+        Optional<Bid> highestBid = bidRepository.findTopByProductIdOrderByPriceDesc(product.getId());
 
         String typeName = product.getProductType() != null ? product.getProductType().getName() : "";
         String startingPrice = product.getStartingPrice() != null ? product.getStartingPrice().toPlainString() : "";
@@ -195,8 +221,6 @@ public class ProductController {
             bidPrice = highestBid.get().getPrice().toPlainString();
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("type, model, serial, description, starting price, email, final price\n");
         sb.append(escapeCsv(typeName)).append(", ")
           .append(escapeCsv(product.getModel())).append(", ")
           .append(escapeCsv(product.getSerial())).append(", ")
@@ -204,7 +228,6 @@ public class ProductController {
           .append(startingPrice).append(", ")
           .append(escapeCsv(bidderEmail)).append(", ")
           .append(bidPrice).append("\n");
-        return sb.toString();
     }
 
     private String escapeCsv(String value) {
