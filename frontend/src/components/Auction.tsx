@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { MOCK_PRODUCTS, MOCK_TYPES } from "../data/mock_data";
+import { auctionsService } from "../services/auctionsService";
+import type { Auction as AuctionModel } from "../services/auctionsService";
+
+const FALLBACK_IMAGE = "/images/HeroGraphic.png";
 
 interface AuctionProps {
     isModal?: boolean;
@@ -12,8 +15,11 @@ function Auction({ isModal = false }: AuctionProps) {
     const navigate = useNavigate();
     const backgroundLocation = location.state?.backgroundLocation;
     const productId = Number(id);
-    const product = MOCK_PRODUCTS.find((item) => item.id === productId);
+    const [product, setProduct] = useState<AuctionModel | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isClosing, setIsClosing] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const closeTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -31,6 +37,45 @@ function Auction({ isModal = false }: AuctionProps) {
             }
         };
     }, [isModal]);
+
+    useEffect(() => {
+        if (!Number.isFinite(productId) || productId <= 0) {
+            setProduct(null);
+            setIsLoading(false);
+            setError("Invalid auction ID");
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadAuction = async () => {
+            try {
+                const data = await auctionsService.getAuctionById(productId);
+                if (isMounted) {
+                    setProduct(data);
+                }
+            } catch (loadError) {
+                if (isMounted) {
+                    setProduct(null);
+                    setError(loadError instanceof Error ? loadError.message : "Failed to load auction");
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        loadAuction();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [productId]);
+
+    useEffect(() => {
+        setCurrentImageIndex(0);
+    }, [product?.id]);
 
     const closeModal = () => {
         const navigateToBackground = () => {
@@ -56,6 +101,45 @@ function Auction({ isModal = false }: AuctionProps) {
             navigateToBackground();
         }, 220);
     };
+
+    if (isLoading) {
+        return (
+            <section className="w-full py-16 px-4 flex flex-col items-center bg-blue-50 rounded-4xl">
+                <p className="text-slate-500">Loading auction...</p>
+            </section>
+        );
+    }
+
+    if (error && !product) {
+        if (isModal) {
+            return (
+                <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 ${isClosing ? 'animate-backdrop-fade-out' : 'animate-backdrop-fade'}`}>
+                    <div className={`w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 text-center ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
+                        <h2 className="font-montserrat text-3xl font-bold text-gray-800">
+                            Auction <span className="text-teal-700">Error</span>
+                        </h2>
+                        <p className="mt-4 text-slate-500">{error}</p>
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="mt-6 px-5 py-2.5 rounded-xl bg-teal-700 text-white font-semibold hover:bg-teal-950 transition"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <section className="w-full py-16 px-4 flex flex-col items-center bg-blue-50 rounded-4xl">
+                <h2 className="font-montserrat text-3xl lg:text-5xl font-bold text-gray-800 text-center">
+                    Auction <span className="text-teal-700">Error</span>
+                </h2>
+                <p className="mt-4 text-slate-500 text-center">{error}</p>
+            </section>
+        );
+    }
 
     if (!product) {
         if (isModal) {
@@ -92,11 +176,9 @@ function Auction({ isModal = false }: AuctionProps) {
         );
     }
 
-    const typeById = new Map(MOCK_TYPES.map((type) => [type.id, type.name]));
-    const productTypeName = typeById.get(product.type_id) ?? "Unknown Type";
-    const images = product.images;
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const isOpen = !product.is_closed;
+    const productTypeName = product.productType?.name ?? "Unknown Type";
+    const images = product.imageObjectKey ? [product.imageObjectKey] : [FALLBACK_IMAGE];
+    const isOpen = !product.closed;
     const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
     if (isModal) {
@@ -192,7 +274,7 @@ function Auction({ isModal = false }: AuctionProps) {
                                         </div>
                                         <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
                                             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
-                                            <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.basePrice.toFixed(2)}</p>
+                                            <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
                                         </div>
                                     </div>
                                     <button
@@ -290,7 +372,7 @@ function Auction({ isModal = false }: AuctionProps) {
                             </div>
                             <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
                                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
-                                <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.basePrice.toFixed(2)}</p>
+                                <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
                             </div>
                         </div>
                         <button

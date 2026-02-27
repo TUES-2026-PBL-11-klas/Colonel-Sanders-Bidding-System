@@ -1,32 +1,87 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MOCK_PRODUCTS, MOCK_TYPES } from '../data/mock_data';
+import { auctionsService } from '../services/auctionsService';
+import type { Auction } from '../services/auctionsService';
+
+const FALLBACK_IMAGE = '/images/HeroGraphic.png';
 
 export default function InventoryDashboard() {
   const location = useLocation();
-  const dashboardProducts = useMemo(() => {
-    const shuffled = [...MOCK_PRODUCTS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(5, shuffled.length));
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAuctions = async () => {
+      try {
+        const data = await auctionsService.getAuctions();
+        if (isMounted) {
+          setAuctions(data);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : 'Failed to load dashboard auctions');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadAuctions();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const dashboardProducts = useMemo(() => {
+    const shuffled = [...auctions].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, shuffled.length));
+  }, [auctions]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const current = dashboardProducts[currentIndex];
-  const typeById = useMemo(
-    () => new Map(MOCK_TYPES.map((type) => [type.id, type.name])),
-    []
-  );
-  const currentTypeName = typeById.get(current?.type_id ?? -1) ?? 'Unknown Type';
+  const currentTypeName = current?.productType?.name ?? 'Unknown Type';
   const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
-
-  if (!current) {
-    return null;
-  }
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev === dashboardProducts.length - 1 ? 0 : prev + 1));
   }, [dashboardProducts.length]);
+
+  useEffect(() => {
+    if (dashboardProducts.length === 0) {
+      setCurrentIndex(0);
+      return;
+    }
+
+    setCurrentIndex((prev) => (prev >= dashboardProducts.length ? 0 : prev));
+  }, [dashboardProducts.length]);
+
+  if (isLoading) {
+    return (
+      <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl mb-0">
+        <p className="text-gray-500">Loading dashboard...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl mb-0">
+        <p className="text-red-500">{error}</p>
+      </section>
+    );
+  }
+
+  if (!current) {
+    return null;
+  }
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? dashboardProducts.length - 1 : prev - 1));
@@ -79,7 +134,7 @@ export default function InventoryDashboard() {
         <div className="w-full lg:w-1/2 bg-slate-50 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden shrink-0 h-64 sm:h-80 lg:h-auto">
           <img 
             key={`img-${currentIndex}`}
-            src={current.images[0]} 
+            src={current.imageObjectKey ?? FALLBACK_IMAGE} 
             alt="Asset" 
             className="max-w-full max-h-full object-contain mix-blend-multiply opacity-90 animate-reveal"
           />
@@ -109,7 +164,7 @@ export default function InventoryDashboard() {
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Starting Price</p>
               <p className="text-2xl font-bold text-slate-900 font-montserrat">
-                €{current.basePrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                €{current.startingPrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </p>
               <p className="text-[10px] font-mono text-slate-300 mt-1 uppercase">ID: {current.serial}</p>
             </div>
