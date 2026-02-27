@@ -112,18 +112,6 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/users")
-    public List<AppUser> getAllUsers() {
-        return StreamSupport.stream(userRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList());
-    }
-
-    @GetMapping("/users/{id}")
-    public ResponseEntity<AppUser> getUserById(@PathVariable("id") Long id) {
-        Optional<AppUser> user = userRepository.findById(id);
-        return user.map(u -> new ResponseEntity<>(u, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
 }
 
 // Records for request/response bodies
