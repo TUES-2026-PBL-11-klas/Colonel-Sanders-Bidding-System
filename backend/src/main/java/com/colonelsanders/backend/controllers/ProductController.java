@@ -160,6 +160,35 @@ public class ProductController {
         product.setClosed(true);
         productRepository.save(product);
 
+        String csv = buildProductCsv(id, product);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"auction-result-" + id + ".csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/api/products/{id}/export", produces = "text/csv")
+    public ResponseEntity<?> exportProductCsv(@PathVariable("id") Long id) {
+        Optional<Product> foundProduct = productRepository.findById(id);
+        if (foundProduct.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Product product = foundProduct.get();
+        String csv = buildProductCsv(id, product);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"product-" + id + ".csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv"));
+
+        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+    }
+
+    private String buildProductCsv(Long id, Product product) {
         Optional<Bid> highestBid = bidRepository.findTopByProductIdOrderByPriceDesc(id);
 
         String typeName = product.getProductType() != null ? product.getProductType().getName() : "";
@@ -172,21 +201,16 @@ public class ProductController {
             bidPrice = highestBid.get().getPrice().toPlainString();
         }
 
-        String csv = "Type, model, sn, desc, st_price, email_of_highest_bidder, price_of_bid_of_highest_bidder\n"
-                + escapeCsv(typeName) + ", "
-                + escapeCsv(product.getModel()) + ", "
-                + escapeCsv(product.getSerial()) + ", "
-                + escapeCsv(product.getDescription()) + ", "
-                + startingPrice + ", "
-                + escapeCsv(bidderEmail) + ", "
-                + bidPrice + "\n";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"auction-result-" + id + ".csv\"");
-        headers.setContentType(MediaType.parseMediaType("text/csv"));
-
-        return new ResponseEntity<>(csv, headers, HttpStatus.OK);
+        StringBuilder sb = new StringBuilder();
+        sb.append("type, model, serial, description, starting price, email, final price\n");
+        sb.append(escapeCsv(typeName)).append(", ")
+          .append(escapeCsv(product.getModel())).append(", ")
+          .append(escapeCsv(product.getSerial())).append(", ")
+          .append(escapeCsv(product.getDescription())).append(", ")
+          .append(startingPrice).append(", ")
+          .append(escapeCsv(bidderEmail)).append(", ")
+          .append(bidPrice).append("\n");
+        return sb.toString();
     }
 
     private String escapeCsv(String value) {
