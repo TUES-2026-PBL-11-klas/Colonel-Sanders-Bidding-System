@@ -8,7 +8,7 @@ This guide explains how to run the Colonel Sanders Bidding System using Docker.
 
 ### Prerequisites
 - Docker Desktop installed and running
-- Java 21 JDK installed
+- Java 25 JDK installed
 - Gradle 9.3.0+
 
 ### Step 1: Start PostgreSQL Container
@@ -72,13 +72,11 @@ Run both PostgreSQL and Spring Boot as Docker containers (for staging/CI environ
 
 ### Setup Environment Variables
 
-Create a `.env` file in the project root with your database credentials:
+Create a `.env` file in the project root (copy from `.env.example`):
 
 ```bash
-# .env (in project root)
-DB_URL=jdbc:postgresql://postgres:5432/mydb
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+cp .env.example .env
+# Edit .env with your actual values
 ```
 
 Docker Compose automatically reads this file and passes variables to all services.
@@ -100,9 +98,11 @@ This command will:
 1. Read environment variables from `.env`
 2. Build the Spring Boot backend application
 3. Start PostgreSQL 16-Alpine database
-4. Start the backend service on port 8080
+4. Start MinIO object storage
+5. Start the backend service on port 8080
 
 The backend will be available at: `http://localhost:8080`
+MinIO Console will be available at: `http://localhost:9001`
 
 ### Stop the Stack
 
@@ -126,14 +126,18 @@ docker-compose down -v
 - **Image**: postgres:16-alpine
 - **Port**: 5432
 - **Database**: mydb
-- **User**: admin
-- **Password**: admin
 - **Volume**: `postgres_data` (persistent storage)
 - **Healthcheck**: Enabled - waits until database is ready
 
+#### MinIO (minio)
+- **Image**: minio/minio:latest
+- **Ports**: 9000 (API), 9001 (Console)
+- **Volume**: `minio_data` (persistent storage)
+- **Used for**: Product image storage
+
 #### Spring Boot Backend
 - **Port**: 8080
-- **Depends on**: PostgreSQL (waits for health check)
+- **Depends on**: PostgreSQL (waits for health check), MinIO
 - **Auto-restart**: Unless manually stopped
 
 ---
@@ -142,22 +146,39 @@ docker-compose down -v
 
 ### Environment Variables
 
-The backend service uses these environment variables:
+The backend service uses these environment variables (configured in `.env`):
 
 ```yaml
-DB_URL: jdbc:postgresql://postgres:5432/mydb
+# Database
+DB_URL: jdbc:postgresql://localhost:5432/mydb         # local dev
+DB_URL_DOCKER: jdbc:postgresql://postgres:5432/mydb   # Docker
 DB_USERNAME: admin
 DB_PASSWORD: admin
+
+# JWT
+JWT_SECRET: <base64-encoded-secret>
+JWT_EXPIRATION: 3600000
+
+# MinIO (Object Storage)
+MINIO_ENDPOINT: http://localhost:9000                 # local dev
+MINIO_ENDPOINT_DOCKER: http://minio:9000              # Docker
+MINIO_ACCESS_KEY: minioadmin
+MINIO_SECRET_KEY: minioadmin
+MINIO_BUCKET: product-images
+MINIO_URL_EXPIRY_SECONDS: 3600
+
+# Email (SMTP)
+MAIL_HOST: smtp.gmail.com
+MAIL_PORT: 587
+MAIL_USERNAME: your-email@example.com
+MAIL_PASSWORD: your-app-password
+
+# Admin Account (created on startup)
+ADMIN_EMAIL: admin@example.com
+ADMIN_PASSWORD: admin
 ```
 
-These are injected into `application.yml` using Spring's property placeholder syntax:
-- `${DB_URL}`
-- `${DB_USERNAME}`
-- `${DB_PASSWORD}`
-
-For local development, PostgreSQL runs on `localhost:5432`. In Docker, it runs on the `postgres` service hostname.
-
-The `ddl-auto: update` setting in `application.yml` ensures tables are created if they don't exist.
+Copy `.env.example` to `.env` and fill in your values. Docker Compose automatically reads the `.env` file.
 
 ---
 
