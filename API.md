@@ -4,9 +4,10 @@ Base URL (local): `http://localhost:8080`
 
 ## Authentication
 
-- Auth style: JWT-based login endpoint exists.
-- Current access policy in `SecurityConfig`: all `/api/auth/**` and `/api/products/**` endpoints are currently public (`permitAll`).
-- `POST /api/auth/login` returns a JWT token for clients that want to use token auth.
+- Auth style: JWT Bearer token.
+- `POST /api/auth/login` returns a JWT token.
+- All `/api/auth/**` endpoints are **public** (no token required).
+- All other endpoints (`/api/users/**`, `/api/products/**`, `/api/bids/**`) require a valid JWT token in the `Authorization: Bearer <token>` header.
 
 ## Content Types
 
@@ -34,13 +35,15 @@ Authenticate a user by email/password and return a JWT token.
 
 ```json
 {
-  "token": "<jwt-token>"
+  "token": "<jwt-token>",
+  "needsPasswordReset": true
 }
 ```
 
+`needsPasswordReset` is `true` for users created via CSV import who haven't changed their password yet.
+
 - **Possible error responses:**
   - `401 Unauthorized` when credentials are invalid
-  - `500 Internal Server Error` if user lookup fails unexpectedly after authentication
 
 ---
 
@@ -70,7 +73,32 @@ Registered successfully
 
 ---
 
-## 3) Import Users from CSV
+## 4) Reset Password
+
+### `POST /api/auth/reset-password`
+Reset a user's password.
+
+- **Auth required:** No
+- **Request body:** JSON
+
+```json
+{
+  "email": "user@example.com",
+  "newPassword": "new-secure-password"
+}
+```
+
+- **Success response:** `200 OK`
+
+```
+Password reset successfully
+```
+
+After resetting, the user's `needsPasswordReset` flag is set to `false`.
+
+---
+
+## 4) Import Users from CSV
 
 ### `POST /api/auth/import-users`
 Bulk-import users from a CSV file. Each line should contain one email address. Passwords are auto-generated. **An email with login credentials is automatically sent to each newly created user via SMTP.**
@@ -107,12 +135,12 @@ Credentials are sent via email to each created user automatically — they are *
 
 ---
 
-## 4) Get All Users
+## 5) Get All Users
 
-### `GET /api/auth/users`
+### `GET /api/users`
 Returns all registered users.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Request body:** None
 - **Success response:** `200 OK`
 
@@ -128,12 +156,12 @@ Returns all registered users.
 
 ---
 
-## 5) Get User by ID
+## 6) Get User by ID
 
-### `GET /api/auth/users/{id}`
+### `GET /api/users/{id}`
 Returns one user by ID.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Path params:**
   - `id` (number) — User ID
 - **Success response:** `200 OK` (same user shape as above)
@@ -141,12 +169,12 @@ Returns one user by ID.
 
 ---
 
-## 6) Get All Products
+## 7) Get All Products
 
 ### `GET /api/products`
 Returns all products.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Request body:** None
 - **Success response:** `200 OK`
 
@@ -172,12 +200,12 @@ Returns all products.
 
 ---
 
-## 7) Get Product by ID
+## 8) Get Product by ID
 
 ### `GET /api/products/{id}`
 Returns one product by ID.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Path params:**
   - `id` (number) — Product ID
 - **Success response:** `200 OK` (same product shape as above)
@@ -185,12 +213,12 @@ Returns one product by ID.
 
 ---
 
-## 8) Import Products from CSV
+## 9) Import Products from CSV
 
 ### `POST /api/products/import`
 Imports/updates products from a CSV file.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Content-Type:** `multipart/form-data`
 - **Form fields:**
   - `file` (required) — CSV file
@@ -213,12 +241,12 @@ Imports/updates products from a CSV file.
 
 ---
 
-## 9) Upload Product Image
+## 10) Upload Product Image
 
 ### `POST /api/products/{id}/image`
 Uploads an image for a product, stores object key, and returns a presigned URL.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Content-Type:** `multipart/form-data`
 - **Path params:**
   - `id` (number) — Product ID
@@ -241,12 +269,12 @@ Uploads an image for a product, stores object key, and returns a presigned URL.
 
 ---
 
-## 10) Get Product Image URL
+## 11) Get Product Image URL
 
 ### `GET /api/products/{id}/image-url`
 Returns a fresh presigned URL for the product image.
 
-- **Auth required:** No
+- **Auth required:** Yes (JWT)
 - **Path params:**
   - `id` (number) — Product ID
 
@@ -272,6 +300,73 @@ Returns a fresh presigned URL for the product image.
 
 ---
 
+## 12) Close Auction
+
+### `POST /api/products/{id}/close`
+Closes the auction for a product and returns a CSV with the result (highest bidder and price).
+
+- **Auth required:** Yes (JWT)
+- **Path params:**
+  - `id` (number) — Product ID
+- **Success response:** `200 OK` — Returns a CSV file download
+
+```
+type, model, serial, description, starting price, email, final price
+Laptop, ThinkPad X1, SN123, 14-inch laptop, 100, winner@example.com, 250
+```
+
+- **Error responses:**
+  - `404 Not Found` when product does not exist
+  - `400 Bad Request` when auction is already closed
+
+---
+
+## 13) Export Product CSV
+
+### `GET /api/products/{id}/export`
+Exports a product's details and highest bid as a CSV file.
+
+- **Auth required:** Yes (JWT)
+- **Path params:**
+  - `id` (number) — Product ID
+- **Success response:** `200 OK` — Returns a CSV file download (same format as close auction)
+- **Error response:** `404 Not Found` when product does not exist
+
+---
+
+## 14) Create Bid
+
+### `POST /api/bids`
+Place a bid on a product. The authenticated user is determined from the JWT token.
+
+- **Auth required:** Yes (JWT)
+- **Request body:** JSON
+
+```json
+{
+  "productId": 1,
+  "price": 150.00
+}
+```
+
+- **Success response:** `201 Created`
+
+```json
+{
+  "id": 1,
+  "price": 150.00,
+  "product": { ... },
+  "appUser": { ... },
+  "createdAt": "2026-02-27T10:00:00.000+00:00"
+}
+```
+
+- **Error responses:**
+  - `400 Bad Request` when bid is invalid (e.g., auction closed, invalid product)
+  - `401 Unauthorized` when not authenticated
+
+---
+
 ## cURL Examples
 
 ### Login
@@ -288,45 +383,79 @@ curl -X POST "http://localhost:8080/api/auth/register" \
   -d '{"email":"user@example.com","password":"your-password"}'
 ```
 
+### Reset password
+```bash
+curl -X POST "http://localhost:8080/api/auth/reset-password" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","newPassword":"new-password"}'
+```
+
 ### Import users CSV
 ```bash
 curl -X POST "http://localhost:8080/api/auth/import-users" \
   -F "file=@backend/sample-data/users-example.csv"
 ```
 
-### Get all users
+### Get all users (authenticated)
 ```bash
-curl "http://localhost:8080/api/auth/users"
+curl "http://localhost:8080/api/users" \
+  -H "Authorization: Bearer <token>"
 ```
 
-### Get user by id
+### Get user by id (authenticated)
 ```bash
-curl "http://localhost:8080/api/auth/users/1"
+curl "http://localhost:8080/api/users/1" \
+  -H "Authorization: Bearer <token>"
 ```
 
-### Get all products
+### Get all products (authenticated)
 ```bash
-curl "http://localhost:8080/api/products"
+curl "http://localhost:8080/api/products" \
+  -H "Authorization: Bearer <token>"
 ```
 
-### Get product by id
+### Get product by id (authenticated)
 ```bash
-curl "http://localhost:8080/api/products/1"
+curl "http://localhost:8080/api/products/1" \
+  -H "Authorization: Bearer <token>"
 ```
 
-### Import products CSV
+### Import products CSV (authenticated)
 ```bash
 curl -X POST "http://localhost:8080/api/products/import" \
+  -H "Authorization: Bearer <token>" \
   -F "file=@backend/sample-data/products-example.csv"
 ```
 
-### Upload product image
+### Upload product image (authenticated)
 ```bash
 curl -X POST "http://localhost:8080/api/products/1/image" \
+  -H "Authorization: Bearer <token>" \
   -F "file=@C:/path/to/image.jpg"
 ```
 
-### Get product image URL
+### Get product image URL (authenticated)
 ```bash
-curl "http://localhost:8080/api/products/1/image-url"
+curl "http://localhost:8080/api/products/1/image-url" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Close auction (authenticated)
+```bash
+curl -X POST "http://localhost:8080/api/products/1/close" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Export product CSV (authenticated)
+```bash
+curl "http://localhost:8080/api/products/1/export" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Place a bid (authenticated)
+```bash
+curl -X POST "http://localhost:8080/api/bids" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"productId":1,"price":150.00}'
 ```
