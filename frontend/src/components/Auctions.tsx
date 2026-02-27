@@ -58,10 +58,6 @@ export default function AllAuctions() {
     if (!auctionsCsvFile) {
       setImportError("Please select a CSV file first.");
       return;
-        if (!canManageImports) {
-          setImportError("You are not allowed to upload auction CSV files.");
-          return;
-        }
     }
 
     try {

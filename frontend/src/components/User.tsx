@@ -35,7 +35,8 @@ export default function User() {
 
       const decoded = JSON.parse(jsonPayload)
       return {
-        email: decoded.sub
+        email: decoded.sub,
+        role: decoded.role
       }
     } catch (e) {
       console.error('Failed to parse JWT:', e)
@@ -96,6 +97,8 @@ export default function User() {
   if (loading)
     return <div className="bg-white p-6 rounded-lg shadow-md">Loading...</div>
 
+  const isAdmin = decodedToken?.role && Array.isArray(decodedToken.role) && decodedToken.role.includes('ROLE_ADMIN')
+
   return (
     <div className="min-h-screen bg-blue-50/30 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -104,10 +107,18 @@ export default function User() {
           {error && <p className="text-red-600 mb-4">{error}</p>}
 
           {decodedToken ? (
-            <p className="text-gray-700 mb-2">
-              Email:{' '}
-              <span className="font-semibold">{decodedToken.email || '-'}</span>
-            </p>
+            <>
+              <p className="text-gray-700 mb-2">
+                Email:{' '}
+                <span className="font-semibold">{decodedToken.email || '-'}</span>
+              </p>
+              <p className="text-gray-700 mb-2">
+                Role:{' '}
+                <span className="font-semibold">
+                  {isAdmin ? 'Admin' : 'User'}
+                </span>
+              </p>
+            </>
           ) : (
             <p>No token data available</p>
           )}

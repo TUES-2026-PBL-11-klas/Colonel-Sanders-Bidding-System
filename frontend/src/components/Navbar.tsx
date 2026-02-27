@@ -134,7 +134,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((prev) => !prev)}
-                  className="max-w-64 truncate hover:text-teal-200 transition"
+                  className="max-w-64 truncate hover:text-teal-200 transition cursor-pointer"
                   title={userEmail}
                 >
                   {userEmail}
@@ -143,7 +143,7 @@ export default function Navbar() {
                   <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-xl border border-gray-200 py-1 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200">
                     <a
                       href="/user"
-                      className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                       onClick={() => {
                         setIsAccountMenuOpen(false);
                         setIsOpen(false);
@@ -154,7 +154,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                     >
                       Logout
                     </button>
@@ -187,7 +187,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setIsAccountMenuOpen((prev) => !prev)}
-                  className="w-full text-left py-1 hover:text-teal-200 transition font-medium truncate"
+                  className="w-full text-left py-1 hover:text-teal-200 transition font-medium truncate "
                 >
                   {userEmail}
                 </button>

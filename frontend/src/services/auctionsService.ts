@@ -15,6 +15,8 @@ export interface Auction {
 	serial: string
 	closed: boolean
 	imageObjectKey: string | null
+	imageUrl: string | null
+	productId?: string
 	startingPrice: number
 	createdAt?: string
 	updatedAt?: string
@@ -27,14 +29,6 @@ export interface Bid {
 	appUserId: number
 	appUserEmail: string
 	price: number
-}
-
-export interface ProductImportResult {
-	processed: number
-	created: number
-	updated: number
-	failed: number
-	errors: string[]
 }
 
 const buildAuthHeaders = () => {
@@ -99,27 +93,6 @@ export const auctionsService = {
 			headers: buildAuthHeaders(),
 			credentials: 'include',
 			body: JSON.stringify({ productId, price }),
-		})
-
-		if (!response.ok) {
-			return parseError(response)
-		}
-
-		return response.json()
-	},
-
-	async importAuctionsCsv(file: File): Promise<ProductImportResult> {
-		const token = authService.getToken()
-		const formData = new FormData()
-		formData.append('file', file)
-
-		const response = await fetch(`${API_BASE_URL}/products/import`, {
-			method: 'POST',
-			headers: {
-				...(token ? { Authorization: `Bearer ${token}` } : {}),
-			},
-			credentials: 'include',
-			body: formData,
 		})
 
 		if (!response.ok) {
