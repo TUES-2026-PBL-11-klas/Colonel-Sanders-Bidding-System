@@ -20,6 +20,10 @@ function Auction({ isModal = false }: AuctionProps) {
     const [error, setError] = useState<string | null>(null);
     const [isClosing, setIsClosing] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isBidPopupOpen, setIsBidPopupOpen] = useState(false);
+    const [bidAmountInput, setBidAmountInput] = useState("");
+    const [bidError, setBidError] = useState<string | null>(null);
+    const [isPlacingBid, setIsPlacingBid] = useState(false);
     const closeTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -77,6 +81,12 @@ function Auction({ isModal = false }: AuctionProps) {
         setCurrentImageIndex(0);
     }, [product?.id]);
 
+    useEffect(() => {
+        setIsBidPopupOpen(false);
+        setBidAmountInput("");
+        setBidError(null);
+    }, [product?.id, product?.closed]);
+
     const closeModal = () => {
         const navigateToBackground = () => {
             if (backgroundLocation?.pathname) {
@@ -114,7 +124,7 @@ function Auction({ isModal = false }: AuctionProps) {
         if (isModal) {
             return (
                 <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 ${isClosing ? 'animate-backdrop-fade-out' : 'animate-backdrop-fade'}`}>
-                    <div className={`w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 text-center ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
+                    <div className={`w-full max-w-2xl bg-white shadow-2xl border border-gray-100 p-8 text-center ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}>
                         <h2 className="font-montserrat text-3xl font-bold text-gray-800">
                             Auction <span className="text-teal-700">Error</span>
                         </h2>
@@ -132,7 +142,7 @@ function Auction({ isModal = false }: AuctionProps) {
         }
 
         return (
-            <section className="w-full py-16 px-4 flex flex-col items-center bg-blue-50 rounded-4xl">
+            <section className="w-full py-16 px-4 flex flex-col items-center bg-blue-50">
                 <h2 className="font-montserrat text-3xl lg:text-5xl font-bold text-gray-800 text-center">
                     Auction <span className="text-teal-700">Error</span>
                 </h2>
@@ -181,6 +191,36 @@ function Auction({ isModal = false }: AuctionProps) {
     const isOpen = !product.closed;
     const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
 
+    const handlePlaceBid = async () => {
+        if (!isOpen || isPlacingBid) {
+            return;
+        }
+
+        if (!isBidPopupOpen) {
+            setIsBidPopupOpen(true);
+            setBidError(null);
+            return;
+        }
+
+        const bidValue = Number.parseFloat(bidAmountInput);
+        if (!Number.isFinite(bidValue) || bidValue <= 0) {
+            setBidError("Enter a valid bid amount.");
+            return;
+        }
+
+        try {
+            setIsPlacingBid(true);
+            setBidError(null);
+            await auctionsService.placeBid(product.id, bidValue);
+            setBidAmountInput("");
+            setIsBidPopupOpen(false);
+        } catch (placeBidError) {
+            setBidError(placeBidError instanceof Error ? placeBidError.message : "Failed to place bid");
+        } finally {
+            setIsPlacingBid(false);
+        }
+    };
+
     if (isModal) {
         return (
             <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-2 sm:p-4 ${isClosing ? 'animate-backdrop-fade-out' : 'animate-backdrop-fade'}`} onClick={closeModal}>
@@ -191,14 +231,13 @@ function Auction({ isModal = false }: AuctionProps) {
                     <button
                         type="button"
                         onClick={closeModal}
-                        className="absolute top-3 right-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-600 border border-gray-200 shadow-sm hover:text-slate-900"
+                        className="absolute top-3 right-3 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white text-5xl leading-none text-slate-600 border border-gray-200 shadow-sm hover:text-slate-900"
                         aria-label="Close auction popup"
                     >
                         ×
                     </button>
 
-                    <section className="h-full w-full px-3 py-4 sm:px-4 sm:py-5 lg:px-5 lg:py-6 flex flex-col items-center bg-blue-50 rounded-4xl">
-                        <div className="w-full flex-1 min-h-0 max-w-7xl mx-auto flex flex-col xl:flex-row gap-4 xl:gap-6 p-4 lg:p-6 rounded-4xl lg:rounded-[3rem] bg-white border border-gray-100 shadow-2xl">
+                    <div className="h-full w-full p-4 sm:p-5 lg:p-6 flex flex-col xl:flex-row gap-4 xl:gap-6 bg-white border border-gray-100 shadow-2xl rounded-4xl lg:rounded-[3rem]">
                             <div className="w-full xl:flex-1 min-h-0 flex flex-col xl:flex-row gap-3">
                                 <div className="relative order-1 xl:order-2 flex-1 min-h-0 flex items-center justify-center bg-slate-50 rounded-2xl p-4 lg:p-5 h-56 sm:h-72 xl:h-full overflow-hidden">
                                     {images.length > 0 ? (
@@ -265,40 +304,64 @@ function Auction({ isModal = false }: AuctionProps) {
                                 </div>
 
                                 <div className="mt-auto pt-3 border-t border-gray-100">
-                                    <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mb-4 items-stretch">
-                                        <div className="text-left order-2 sm:order-1 h-full flex flex-col justify-center">
-                                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Availability</p>
-                                            <p className={`text-sm font-bold ${isOpen ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                {isOpen ? 'Accepting Bids' : 'Sold Out'}
-                                            </p>
+                                    <div className={`relative transition-[padding] duration-300 ${isBidPopupOpen ? 'sm:pr-44 lg:pr-56' : 'pr-0'}`}>
+                                        <div className={`absolute inset-x-0 bottom-0 z-20 sm:inset-x-auto sm:right-0 sm:top-0 sm:bottom-0 origin-bottom sm:origin-right transition-all duration-300 mx-2 mb-2 sm:mx-0 sm:mb-0 sm:h-full rounded-2xl border border-gray-200 bg-white shadow-xl p-4 sm:p-3 w-auto sm:w-44 lg:w-56 flex flex-col justify-center ${isBidPopupOpen ? 'opacity-100 translate-y-0 sm:translate-y-0 sm:translate-x-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-6 sm:translate-y-0 sm:translate-x-2 scale-95 pointer-events-none'}`}>
+                                            <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2" htmlFor="bid-amount-modal">
+                                                Your Bid
+                                            </label>
+                                            <input
+                                                id="bid-amount-modal"
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={bidAmountInput}
+                                                onChange={(event) => {
+                                                    setBidAmountInput(event.target.value);
+                                                    if (bidError) {
+                                                        setBidError(null);
+                                                    }
+                                                }}
+                                                placeholder="Amount"
+                                                className="w-full h-14 sm:h-16 rounded-xl border border-gray-300 px-3 text-sm text-slate-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+                                            />
                                         </div>
-                                        <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
-                                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
-                                            <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mb-4 items-stretch">
+                                            <div className="text-left order-2 sm:order-1 h-full flex flex-col justify-center">
+                                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Availability</p>
+                                                <p className={`text-sm font-bold ${isOpen ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                    {isOpen ? 'Accepting Bids' : 'Sold Out'}
+                                                </p>
+                                            </div>
+                                            <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
+                                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
+                                                <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
+                                            </div>
                                         </div>
                                     </div>
                                     <button
-                                        disabled={!isOpen}
+                                        type="button"
+                                        disabled={!isOpen || isPlacingBid}
+                                        onClick={handlePlaceBid}
                                         className={`w-full h-14 rounded-2xl font-semibold text-base transition-all duration-300 border-2 ${
                                             isOpen
                                                 ? 'bg-teal-700 border-teal-700 text-white hover:bg-teal-950 hover:border-teal-950 cursor-pointer'
                                                 : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                                         }`}
                                     >
-                                        {isOpen ? 'Place Bid' : 'Auction Closed'}
+                                        {isOpen ? (isPlacingBid ? 'Placing Bid...' : 'Place Bid') : 'Auction Closed'}
                                     </button>
+                                    {bidError && <p className="mt-2 text-xs text-red-600">{bidError}</p>}
+
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <section className="w-full py-6 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
-            <div className="w-full max-w-7xl mx-auto flex flex-col xl:flex-row gap-6 xl:gap-10 p-6 lg:p-10 pb-3 lg:pb-6 rounded-4xl lg:rounded-[3rem] bg-white shadow-2xl border border-gray-100">
+        <section className="w-full max-w-7xl mx-auto py-6 px-0 flex flex-col xl:flex-row gap-6 xl:gap-10 p-6 lg:p-10 pb-3 lg:pb-6 rounded-4xl lg:rounded-[3rem] bg-white shadow-2xl border border-gray-100">
                 <div className="w-full xl:flex-1 flex flex-col xl:flex-row gap-4">
                     <div className="relative order-1 xl:order-2 flex-1 flex items-center justify-center bg-slate-50 rounded-2xl p-6 h-72 sm:h-96 lg:h-128 overflow-hidden">
                         {images.length > 0 ? (
@@ -363,31 +426,55 @@ function Auction({ isModal = false }: AuctionProps) {
                     </p>
 
                     <div className="mt-auto pt-4 border-t border-gray-100">
-                        <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mb-6 items-stretch">
-                            <div className="text-left order-2 sm:order-1 h-full flex flex-col justify-center">
-                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Availability</p>
-                                <p className={`text-sm font-bold ${isOpen ? 'text-emerald-600' : 'text-red-600'}`}>
-                                    {isOpen ? 'Accepting Bids' : 'Sold Out'}
-                                </p>
+                        <div className={`relative transition-[padding] duration-300 ${isBidPopupOpen ? 'sm:pr-44 lg:pr-56' : 'pr-0'}`}>
+                            <div className={`fixed inset-x-0 bottom-0 z-20 sm:absolute sm:inset-x-auto sm:right-0 sm:top-0 sm:bottom-0 origin-bottom sm:origin-right transition-all duration-300 mx-2 mb-2 sm:mx-0 sm:mb-0 sm:h-full rounded-2xl border border-gray-200 bg-white shadow-xl p-4 sm:p-3 w-auto sm:w-44 lg:w-56 flex flex-col justify-center ${isBidPopupOpen ? 'opacity-100 translate-y-0 sm:translate-y-0 sm:translate-x-0 scale-100 pointer-events-auto' : 'opacity-0 translate-y-6 sm:translate-y-0 sm:translate-x-2 scale-95 pointer-events-none'}`}>
+                                <label className="block text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2" htmlFor="bid-amount-page">
+                                    Your Bid
+                                </label>
+                                <input
+                                    id="bid-amount-page"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={bidAmountInput}
+                                    onChange={(event) => {
+                                        setBidAmountInput(event.target.value);
+                                        if (bidError) {
+                                            setBidError(null);
+                                        }
+                                    }}
+                                    placeholder="Amount"
+                                    className="w-full h-16 sm:h-20 rounded-xl border border-gray-300 px-3 text-sm text-slate-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700"
+                                />
                             </div>
-                            <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
-                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
-                                <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-1 gap-3 mb-6 items-stretch">
+                                <div className="text-left order-2 sm:order-1 h-full flex flex-col justify-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Availability</p>
+                                    <p className={`text-sm font-bold ${isOpen ? 'text-emerald-600' : 'text-red-600'}`}>
+                                        {isOpen ? 'Accepting Bids' : 'Sold Out'}
+                                    </p>
+                                </div>
+                                <div className="text-left order-1 sm:order-2 h-full flex flex-col justify-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Starting Price</p>
+                                    <p className="text-lg lg:text-2xl font-semibold text-slate-900">€{product.startingPrice.toFixed(2)}</p>
+                                </div>
                             </div>
-                        </div>
                         <button
-                            disabled={!isOpen}
+                            type="button"
+                            disabled={!isOpen || isPlacingBid}
+                            onClick={handlePlaceBid}
                             className={`w-full h-16 rounded-2xl font-semibold text-base transition-all duration-300 border-2 mb-6${
                                 isOpen
                                     ? 'bg-teal-700 border-teal-700 text-white hover:bg-teal-950 hover:border-teal-950'
                                     : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                             }`}
                         >
-                            {isOpen ? 'Place Bid' : 'Auction Closed'}
+                            {isOpen ? (isPlacingBid ? 'Placing Bid...' : 'Place Bid') : 'Auction Closed'}
                         </button>
+                        {bidError && <p className="-mt-4 mb-6 text-xs text-red-600">{bidError}</p>}
+                        </div>
                     </div>
                 </div>
-            </div>
         </section>
     );
 }
