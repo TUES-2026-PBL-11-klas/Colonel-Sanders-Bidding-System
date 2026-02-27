@@ -7,6 +7,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.http.Method;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,15 +20,18 @@ import java.util.UUID;
 public class ProductImageStorageService {
 
     private final MinioClient minioClient;
+    private final MinioClient publicMinioClient;
     private final String bucket;
     private final int urlExpirySeconds;
 
     public ProductImageStorageService(
             MinioClient minioClient,
+            @Qualifier("publicMinioClient") MinioClient publicMinioClient,
             @Value("${minio.bucket.name}") String bucket,
             @Value("${minio.url-expiry-seconds}") int urlExpirySeconds
     ) {
         this.minioClient = minioClient;
+        this.publicMinioClient = publicMinioClient;
         this.bucket = bucket;
         this.urlExpirySeconds = urlExpirySeconds;
     }
@@ -62,8 +66,7 @@ public class ProductImageStorageService {
             return null;
         }
         try {
-            ensureBucketExists();
-            return minioClient.getPresignedObjectUrl(
+            return publicMinioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucket)
