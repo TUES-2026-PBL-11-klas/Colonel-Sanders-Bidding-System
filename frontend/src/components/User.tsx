@@ -14,6 +14,7 @@ export default function User() {
   const [isUploadingUsersCsv, setIsUploadingUsersCsv] = useState(false)
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
+  const canManageImports = authService.isAdmin()
 
   useEffect(() => {
     fetchUserData()
@@ -63,6 +64,11 @@ export default function User() {
   }
 
   const handleUsersCsvUpload = async () => {
+    if (!canManageImports) {
+      setImportError('You are not allowed to upload user CSV files.')
+      return
+    }
+
     if (!usersCsvFile) {
       setImportError('Please select a CSV file first.')
       return
@@ -107,30 +113,32 @@ export default function User() {
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-3 max-w-2xl mx-auto">
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(event) => {
-                setUsersCsvFile(event.target.files?.[0] ?? null)
-                setImportError('')
-                setImportMessage('')
-              }}
-              className="block w-full h-12 text-base text-gray-700 border border-gray-300 rounded-md px-3 py-0 leading-12 file:mr-4 file:h-8 file:rounded-md file:border file:border-gray-300 file:bg-transparent file:px-4 file:py-0 file:text-base file:font-medium file:leading-8 file:text-gray-700"
-            />
-            <button
-              type="button"
-              onClick={handleUsersCsvUpload}
-              disabled={isUploadingUsersCsv || !usersCsvFile}
-              className="h-12 bg-teal-700 text-white border border-teal-700 px-8 text-base rounded-md min-w-56 whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isUploadingUsersCsv ? 'Uploading...' : 'Upload Users CSV'}
-            </button>
+        {canManageImports && (
+          <div className="bg-white p-6 rounded-2xl shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-3 max-w-2xl mx-auto">
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => {
+                  setUsersCsvFile(event.target.files?.[0] ?? null)
+                  setImportError('')
+                  setImportMessage('')
+                }}
+                className="block w-full h-12 text-base text-gray-700 border border-gray-300 rounded-md px-3 py-0 leading-12 file:mr-4 file:h-8 file:rounded-md file:border file:border-gray-300 file:bg-transparent file:px-4 file:py-0 file:text-base file:font-medium file:leading-8 file:text-gray-700"
+              />
+              <button
+                type="button"
+                onClick={handleUsersCsvUpload}
+                disabled={isUploadingUsersCsv || !usersCsvFile}
+                className="h-12 bg-teal-700 text-white border border-teal-700 px-8 text-base rounded-md min-w-56 whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploadingUsersCsv ? 'Uploading...' : 'Upload Users CSV'}
+              </button>
+            </div>
+            {importMessage && <p className="text-green-700 mt-3 text-center max-w-2xl mx-auto">{importMessage}</p>}
+            {importError && <p className="text-red-600 mt-3 text-center max-w-2xl mx-auto">{importError}</p>}
           </div>
-          {importMessage && <p className="text-green-700 mt-3 text-center max-w-2xl mx-auto">{importMessage}</p>}
-          {importError && <p className="text-red-600 mt-3 text-center max-w-2xl mx-auto">{importError}</p>}
-        </div>
+        )}
       </div>
     </div>
   )
