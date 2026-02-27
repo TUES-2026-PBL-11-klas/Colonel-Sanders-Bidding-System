@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { authService } from '../services/authService'
+import { auctionsService } from '../services/auctionsService'
 
 interface DecodedToken {
   email?: string
@@ -14,6 +15,9 @@ export default function User() {
   const [isUploadingUsersCsv, setIsUploadingUsersCsv] = useState(false)
   const [importMessage, setImportMessage] = useState('')
   const [importError, setImportError] = useState('')
+  const [isExportingCsv, setIsExportingCsv] = useState(false)
+  const [exportMessage, setExportMessage] = useState('')
+  const [exportError, setExportError] = useState('')
   const canManageImports = authService.isAdmin()
 
   useEffect(() => {
@@ -94,6 +98,37 @@ export default function User() {
     }
   }
 
+  const handleExportFinalCsv = async () => {
+    if (!canManageImports) {
+      setExportError('You are not allowed to export final auction CSV files.')
+      return
+    }
+
+    try {
+      setIsExportingCsv(true)
+      setExportError('')
+      setExportMessage('')
+
+      const csvBlob = await auctionsService.exportFinalResultsCsv()
+      const downloadUrl = window.URL.createObjectURL(csvBlob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = 'final-auction-results.csv'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(downloadUrl)
+
+      setExportMessage('Final auctions CSV exported successfully.')
+    } catch (err) {
+      setExportError(
+        err instanceof Error ? err.message : 'Failed to export final auctions CSV'
+      )
+    } finally {
+      setIsExportingCsv(false)
+    }
+  }
+
   if (loading)
     return <div className="bg-white p-6 rounded-lg shadow-md">Loading...</div>
 
@@ -118,6 +153,21 @@ export default function User() {
                   {isAdmin ? 'Admin' : 'User'}
                 </span>
               </p>
+
+              {canManageImports && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleExportFinalCsv}
+                    disabled={isExportingCsv}
+                    className="h-11 bg-teal-700 text-white border border-teal-700 px-6 text-base rounded-md whitespace-nowrap hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isExportingCsv ? 'Exporting...' : 'Export Auction Results'}
+                  </button>
+                  {exportMessage && <p className="text-green-700 mt-2">{exportMessage}</p>}
+                  {exportError && <p className="text-red-600 mt-2">{exportError}</p>}
+                </div>
+              )}
             </>
           ) : (
             <p>No token data available</p>

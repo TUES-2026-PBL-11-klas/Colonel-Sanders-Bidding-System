@@ -101,4 +101,21 @@ export const auctionsService = {
 
 		return response.json()
 	},
+
+	async exportFinalResultsCsv(): Promise<Blob> {
+		const token = authService.getToken()
+		const response = await fetch(`${API_BASE_URL}/products/export`, {
+			method: 'GET',
+			headers: {
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			credentials: 'include',
+		})
+
+		if (!response.ok) {
+			return parseError(response)
+		}
+
+		return response.blob()
+	},
 }
