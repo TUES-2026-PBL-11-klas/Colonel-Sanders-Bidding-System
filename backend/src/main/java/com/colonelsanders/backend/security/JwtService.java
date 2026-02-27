@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import javax.crypto.SecretKey;
 import java.util.Date;
+import org.springframework.security.core.GrantedAuthority;
 
 @Service
 public class JwtService {
