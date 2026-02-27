@@ -16,6 +16,41 @@ export interface LoginResponse {
   }
 }
 
+interface DecodedAuthToken {
+  role?: string[] | string
+  roles?: string[] | string
+  [key: string]: unknown
+}
+
+const decodeToken = (token: string): DecodedAuthToken | null => {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+
+    return JSON.parse(jsonPayload) as DecodedAuthToken
+  } catch {
+    return null
+  }
+}
+
+const normalizeRoles = (value: string[] | string | undefined): string[] => {
+  if (!value) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  return [value]
+}
+
 export interface UserImportResult {
   processed: number
   created: number
@@ -62,6 +97,28 @@ export const authService = {
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY)
+  },
+
+  getRoles(): string[] {
+    const token = this.getToken()
+    if (!token) {
+      return []
+    }
+
+    const decoded = decodeToken(token)
+    if (!decoded) {
+      return []
+    }
+
+    return [
+      ...normalizeRoles(decoded.role),
+      ...normalizeRoles(decoded.roles),
+    ]
+  },
+
+  isAdmin(): boolean {
+    const roles = this.getRoles()
+    return roles.includes('ROLE_ADMIN') || roles.includes('ADMIN')
   },
 
   async importUsersCsv(file: File): Promise<UserImportResult> {
