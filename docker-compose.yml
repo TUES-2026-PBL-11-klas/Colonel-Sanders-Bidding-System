@@ -62,6 +62,22 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # React Frontend (Vite dev server)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: colonel-sanders-bidding-system-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   minio_data:
