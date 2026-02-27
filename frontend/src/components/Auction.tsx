@@ -2,8 +2,74 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { auctionsService } from "../services/auctionsService";
 import type { Auction as AuctionModel } from "../services/auctionsService";
+import { authService } from "../services/authService";
 
-const FALLBACK_IMAGE = "/images/HeroGraphic.png";
+const FALLBACK_IMAGE = "/images/default-image.png";
+const AUCTION_GALLERY_STORAGE_KEY = "auction-image-gallery";
+
+const mergeImages = (...imageGroups: (string[] | undefined)[]) => {
+    const allImages = imageGroups.flatMap((group) => group ?? []).map((image) => image.trim()).filter((image) => image.length > 0);
+    const seen = new Set<string>();
+    const merged: string[] = [];
+
+    for (const image of allImages) {
+        const dedupeKey = image.split("?")[0];
+        if (seen.has(dedupeKey)) {
+            continue;
+        }
+
+        seen.add(dedupeKey);
+        merged.push(image);
+    }
+
+    return merged;
+};
+
+const dedupeFiles = (files: File[]) => {
+    const seen = new Set<string>();
+    const deduped: File[] = [];
+
+    for (const file of files) {
+        const signature = `${file.name}:${file.size}:${file.lastModified}`;
+        if (seen.has(signature)) {
+            continue;
+        }
+
+        seen.add(signature);
+        deduped.push(file);
+    }
+
+    return deduped;
+};
+
+const getStoredAuctionGallery = (): Record<string, string[]> => {
+    try {
+        const raw = localStorage.getItem(AUCTION_GALLERY_STORAGE_KEY);
+        if (!raw) {
+            return {};
+        }
+
+        const parsed = JSON.parse(raw) as Record<string, string[]>;
+        if (!parsed || typeof parsed !== "object") {
+            return {};
+        }
+
+        return parsed;
+    } catch {
+        return {};
+    }
+};
+
+const getStoredAuctionImages = (auctionId: number) => {
+    const gallery = getStoredAuctionGallery();
+    return gallery[String(auctionId)] ?? [];
+};
+
+const saveStoredAuctionImages = (auctionId: number, images: string[]) => {
+    const gallery = getStoredAuctionGallery();
+    gallery[String(auctionId)] = images;
+    localStorage.setItem(AUCTION_GALLERY_STORAGE_KEY, JSON.stringify(gallery));
+};
 
 interface AuctionProps {
     isModal?: boolean;
@@ -20,12 +86,19 @@ function Auction({ isModal = false }: AuctionProps) {
     const [error, setError] = useState<string | null>(null);
     const [isClosing, setIsClosing] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [galleryImages, setGalleryImages] = useState<string[]>([FALLBACK_IMAGE]);
+    const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+    const [isUploadingImages, setIsUploadingImages] = useState(false);
+    const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+    const [imageUploadMessage, setImageUploadMessage] = useState<string | null>(null);
     const [isBidPopupOpen, setIsBidPopupOpen] = useState(false);
     const [bidAmountInput, setBidAmountInput] = useState("");
     const [bidError, setBidError] = useState<string | null>(null);
     const [bidSuccess, setBidSuccess] = useState<string | null>(null);
     const [isPlacingBid, setIsPlacingBid] = useState(false);
     const closeTimeoutRef = useRef<number | null>(null);
+    const uploadInProgressRef = useRef(false);
+    const canManageImages = authService.isAdmin();
 
     useEffect(() => {
         if (!isModal) {
@@ -58,6 +131,10 @@ function Auction({ isModal = false }: AuctionProps) {
                 const data = await auctionsService.getAuctionById(productId);
                 if (isMounted) {
                     setProduct(data);
+                    const mergedImages = mergeImages([data.imageUrl ?? ""], getStoredAuctionImages(data.id));
+                    const nextGallery = mergedImages.length > 0 ? mergedImages : [FALLBACK_IMAGE];
+                    setGalleryImages(nextGallery);
+                    setCurrentImageIndex(0);
                 }
             } catch (loadError) {
                 if (isMounted) {
@@ -189,9 +266,66 @@ function Auction({ isModal = false }: AuctionProps) {
     }
 
     const productTypeName = product.productType?.name ?? "Unknown Type";
-    const images = product.imageObjectKey ? [product.imageObjectKey] : [FALLBACK_IMAGE];
+    const images = galleryImages.length > 0 ? galleryImages : [FALLBACK_IMAGE];
     const isOpen = !product.closed;
     const formatInventoryId = (id: number) => `INV - ${String(id).padStart(3, '0')}`;
+
+    const handleImageBulkUpload = async () => {
+        if (uploadInProgressRef.current) {
+            return;
+        }
+
+        if (!canManageImages) {
+            setImageUploadError("You are not allowed to upload auction images.");
+            return;
+        }
+
+        if (!product) {
+            setImageUploadError("Auction is not loaded yet.");
+            return;
+        }
+
+        const filesToUpload = dedupeFiles(selectedImageFiles);
+
+        if (filesToUpload.length === 0) {
+            setImageUploadError("Please select one or more images first.");
+            return;
+        }
+
+        try {
+            uploadInProgressRef.current = true;
+            setIsUploadingImages(true);
+            setImageUploadError(null);
+            setImageUploadMessage(null);
+
+            const uploadedImages: string[] = [];
+
+            for (const file of filesToUpload) {
+                const uploaded = await auctionsService.uploadAuctionImage(product.id, file);
+                if (uploaded.imageUrl) {
+                    uploadedImages.push(uploaded.imageUrl);
+                }
+            }
+
+            const nextGallery = mergeImages(galleryImages.filter((image) => image !== FALLBACK_IMAGE), uploadedImages);
+            const normalizedNextGallery = nextGallery.length > 0 ? nextGallery : [FALLBACK_IMAGE];
+
+            setGalleryImages(normalizedNextGallery);
+            setCurrentImageIndex(Math.max(0, normalizedNextGallery.length - 1));
+            setSelectedImageFiles([]);
+
+            if (product.id && nextGallery.length > 0) {
+                saveStoredAuctionImages(product.id, nextGallery);
+            }
+
+            setImageUploadMessage(`Uploaded ${uploadedImages.length} image(s) for this auction.`);
+        } catch (uploadError) {
+            setImageUploadError(uploadError instanceof Error ? uploadError.message : "Failed to upload images");
+        } finally {
+            setIsUploadingImages(false);
+            uploadInProgressRef.current = false;
+        }
+    };
 
     const handlePlaceBid = async () => {
         if (!isOpen || isPlacingBid) {
@@ -230,7 +364,7 @@ function Auction({ isModal = false }: AuctionProps) {
         return (
             <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-2 sm:p-4 ${isClosing ? 'animate-backdrop-fade-out' : 'animate-backdrop-fade'}`} onClick={closeModal}>
                 <div
-                    className={`relative w-[min(96vw,1180px)] h-[min(90vh,760px)] overflow-hidden bg-blue-50 rounded-4xl shadow-2xl ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}
+                    className={`relative w-[min(96vw,1180px)] max-h-[90vh] overflow-hidden bg-blue-50 rounded-4xl shadow-2xl ${isClosing ? 'animate-popup-out' : 'animate-popup-in'}`}
                     onClick={(event) => event.stopPropagation()}
                 >
                     <button
@@ -242,14 +376,14 @@ function Auction({ isModal = false }: AuctionProps) {
                         ×
                     </button>
 
-                    <div className="h-full w-full p-4 sm:p-5 lg:p-6 flex flex-col xl:flex-row gap-4 xl:gap-6 bg-white border border-gray-100 shadow-2xl rounded-4xl lg:rounded-[3rem]">
+                    <div className="max-h-[90vh] overflow-y-auto w-full p-4 sm:p-5 lg:p-6 flex flex-col xl:flex-row gap-4 xl:gap-6 bg-white border border-gray-100 shadow-2xl rounded-4xl lg:rounded-[3rem]">
                             <div className="w-full xl:flex-1 min-h-0 flex flex-col xl:flex-row gap-3">
-                                <div className="relative order-1 xl:order-2 flex-1 min-h-0 flex items-center justify-center bg-slate-50 rounded-2xl p-4 lg:p-5 h-56 sm:h-72 xl:h-full overflow-hidden">
+                                <div className="relative order-1 xl:order-2 flex-1 min-h-0 flex items-center justify-center bg-slate-50 rounded-2xl p-4 lg:p-5 h-56 sm:h-72 xl:h-120 overflow-hidden">
                                     {images.length > 0 ? (
                                         <img
                                             src={images[currentImageIndex]}
                                             alt={`Product Image ${currentImageIndex + 1}`}
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <p className="text-slate-400">No images available</p>
@@ -307,6 +441,35 @@ function Auction({ isModal = false }: AuctionProps) {
                                         {product.description}
                                     </p>
                                 </div>
+
+                                {canManageImages && (
+                                    <div className="mb-4 rounded-2xl border border-gray-200 bg-slate-50 p-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Auction Images</p>
+                                        <div className="flex flex-col gap-2">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={(event) => {
+                                                    setSelectedImageFiles(Array.from(event.target.files ?? []));
+                                                    setImageUploadError(null);
+                                                    setImageUploadMessage(null);
+                                                }}
+                                                className="block w-full text-xs text-gray-700 border border-gray-300 rounded-md px-2 py-1 file:mr-3 file:rounded-md file:border file:border-gray-300 file:bg-transparent file:px-3 file:py-1 file:text-xs file:font-medium"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleImageBulkUpload}
+                                                disabled={isUploadingImages || selectedImageFiles.length === 0}
+                                                className="h-10 rounded-xl bg-teal-700 text-white text-sm font-semibold border border-teal-700 hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isUploadingImages ? "Uploading Images..." : "Upload Images"}
+                                            </button>
+                                            {imageUploadError && <p className="text-xs text-red-600">{imageUploadError}</p>}
+                                            {imageUploadMessage && <p className="text-xs text-emerald-600">{imageUploadMessage}</p>}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="mt-auto pt-3 border-t border-gray-100">
                                     <div className={`relative transition-[padding] duration-300 ${isBidPopupOpen ? 'sm:pr-44 lg:pr-56' : 'pr-0'}`}>
@@ -370,14 +533,14 @@ function Auction({ isModal = false }: AuctionProps) {
     }
 
     return (
-        <section className="w-full max-w-7xl mx-auto py-6 px-0 flex flex-col xl:flex-row gap-6 xl:gap-10 p-6 lg:p-10 pb-3 lg:pb-6 rounded-4xl lg:rounded-[3rem] bg-white shadow-2xl border border-gray-100">
-                <div className="w-full xl:flex-1 flex flex-col xl:flex-row gap-4">
-                    <div className="relative order-1 xl:order-2 flex-1 flex items-center justify-center bg-slate-50 rounded-2xl p-6 h-72 sm:h-96 lg:h-128 overflow-hidden">
+        <section className="w-full max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-10 flex flex-col lg:flex-row gap-6 lg:gap-10 pb-3 lg:pb-6 rounded-4xl lg:rounded-[3rem] bg-white shadow-2xl border border-gray-100">
+            <div className="w-full lg:flex-1 flex flex-col lg:flex-row gap-4">
+                    <div className="relative order-1 lg:order-2 flex-1 flex items-center justify-center bg-slate-50 rounded-2xl p-4 sm:p-6 h-64 sm:h-96 lg:h-128 overflow-hidden">
                         {images.length > 0 ? (
                             <img
                                 src={images[currentImageIndex]}
                                 alt={`Product Image ${currentImageIndex + 1}`}
-                                className="w-full h-full object-contain scale-110"
+                                className="w-full h-full object-cover"
                             />
                         ) : (
                             <p className="text-slate-400">No images available</p>
@@ -396,7 +559,7 @@ function Auction({ isModal = false }: AuctionProps) {
                     </div>
 
                     {images.length > 0 && (
-                        <div className="order-2 xl:order-1 flex xl:flex-col items-center gap-2 overflow-x-auto xl:overflow-visible pb-1 xl:pb-0">
+                        <div className="order-2 lg:order-1 flex lg:flex-col items-center gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
                             {images.map((img, index) => (
                                 <button
                                     key={index}
@@ -418,7 +581,7 @@ function Auction({ isModal = false }: AuctionProps) {
                     )}
                 </div>
 
-                <div className="w-full xl:w-[44%] xl:pl-2 flex flex-col">
+                <div className="w-full lg:w-[44%] lg:pl-2 flex flex-col">
                     <p className="text-teal-600 font-bold text-[10px] lg:text-xs uppercase tracking-[0.2em] mb-3">
                         {productTypeName}
                     </p>
@@ -433,6 +596,35 @@ function Auction({ isModal = false }: AuctionProps) {
                     <p className="text-slate-500 text-sm sm:text-base lg:text-lg leading-relaxed mb-8">
                         {product.description}
                     </p>
+
+                    {canManageImages && (
+                        <div className="mb-8 rounded-2xl border border-gray-200 bg-slate-50 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Auction Images</p>
+                            <div className="flex flex-col gap-3">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(event) => {
+                                        setSelectedImageFiles(Array.from(event.target.files ?? []));
+                                        setImageUploadError(null);
+                                        setImageUploadMessage(null);
+                                    }}
+                                    className="block w-full h-11 text-sm text-gray-700 border border-gray-300 rounded-md px-3 py-2 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-transparent file:px-4 file:py-1 file:text-sm file:font-medium"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleImageBulkUpload}
+                                    disabled={isUploadingImages || selectedImageFiles.length === 0}
+                                    className="h-11 rounded-xl bg-teal-700 text-white text-sm font-semibold border border-teal-700 hover:bg-teal-950 hover:border-teal-950 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isUploadingImages ? "Uploading Images..." : "Upload Images"}
+                                </button>
+                                {imageUploadError && <p className="text-xs text-red-600">{imageUploadError}</p>}
+                                {imageUploadMessage && <p className="text-xs text-emerald-600">{imageUploadMessage}</p>}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mt-auto pt-4 border-t border-gray-100">
                         <div className={`relative transition-[padding] duration-300 ${isBidPopupOpen ? 'sm:pr-44 lg:pr-56' : 'pr-0'}`}>
