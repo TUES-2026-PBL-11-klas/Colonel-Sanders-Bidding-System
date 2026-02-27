@@ -102,7 +102,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <section className="w-full min-h-screen pt-6 pb-0 px-0 flex flex-col items-center bg-blue-50 rounded-4xl mb-0">
+    <section className="w-full pt-6 pb-8 px-0 flex flex-col items-center bg-blue-50 rounded-4xl">
       
       {/* Minimalist Navigation Header */}
       <div className="w-full max-w-7xl flex justify-between items-center mb-6 lg:mb-10 px-4 sm:px-2">

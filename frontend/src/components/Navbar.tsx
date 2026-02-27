@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { authService } from '../services/authService';
 
 export default function Navbar() {
@@ -6,6 +6,49 @@ export default function Navbar() {
   const [prevScrollPos, setPrevScrollPos] = useState(0);
   const [visible, setVisible] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const parseTokenEmail = (token: string): string => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((char) => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
+          .join('')
+      );
+
+      const decoded = JSON.parse(payload) as { sub?: string; email?: string };
+      return decoded.email || decoded.sub || 'Account';
+    } catch {
+      return 'Account';
+    }
+  };
+
+  const refreshAuthState = () => {
+    const token = authService.getToken();
+    const loggedIn = !!token;
+
+    setIsLoggedIn(loggedIn);
+    setUserEmail(token ? parseTokenEmail(token) : '');
+
+    if (!loggedIn) {
+      setIsAccountMenuOpen(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      refreshAuthState();
+      setIsOpen(false);
+      window.location.href = '/login';
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,9 +70,28 @@ export default function Navbar() {
   }, [prevScrollPos, isOpen]);
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = authService.getToken();
-    setIsLoggedIn(!!token);
+    refreshAuthState();
+
+    const handleStorageChange = () => {
+      refreshAuthState();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -62,6 +124,36 @@ export default function Navbar() {
             {!isLoggedIn && (
               <a href="/login" className="hover:text-teal-200 transition">Login</a>
             )}
+            {isLoggedIn && (
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                  className="max-w-64 truncate hover:text-teal-200 transition"
+                  title={userEmail}
+                >
+                  {userEmail}
+                </button>
+                {isAccountMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-xl border border-gray-200 py-1 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200">
+                    <a
+                      href="/user"
+                      className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                    >
+                      User Page
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -81,6 +173,35 @@ export default function Navbar() {
             <div className="border-t border-white/20 my-3"></div>
             {!isLoggedIn && (
               <a href="/login" className="block py-1 hover:text-teal-200 transition">Login</a>
+            )}
+            {isLoggedIn && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen((prev) => !prev)}
+                  className="w-full text-left py-1 hover:text-teal-200 transition font-medium truncate"
+                >
+                  {userEmail}
+                </button>
+                {isAccountMenuOpen && (
+                  <div className="mt-2 pl-3 border-l border-white/20 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <a
+                      href="/user"
+                      className="block py-1 hover:text-teal-200 transition"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      User Page
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="block py-1 hover:text-teal-200 transition"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

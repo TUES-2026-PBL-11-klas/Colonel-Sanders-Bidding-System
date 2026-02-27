@@ -17,7 +17,7 @@ function AppRoutes() {
   return (
     <>
       <Routes location={backgroundLocation || location}>
-        <Route path="/" element={<><Hero /><Dashboard /><Bids /></>} />
+        <Route path="/" element={<><Hero /><Dashboard /></>} />
         <Route path="/auctions" element={<AllAuctions />} />
         <Route path="/auctions/:id" element={<Auction />} />
         <Route path="/bids" element={<Bids />} />
