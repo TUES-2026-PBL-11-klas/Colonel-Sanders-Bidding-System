@@ -21,9 +21,9 @@ export default function Bids() {
       <div className="max-w-7xl mx-auto">
         <header className="mb-10 text-left">
           <h2 className="font-montserrat text-3xl lg:text-4xl font-bold text-gray-800">
-            Your <span className="text-teal-700">Active Bids</span>
+            Your Active Bids <span className="text-teal-700">USES MOCK DATA!!</span>
           </h2>
-          <p className="text-gray-500 mt-2">Track the status of your blind offers.</p>
+          <p className="text-gray-500 mt-2">We didn't have the time to finish this. We sacrificed this page for the more important features.</p>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-10">
