@@ -23,6 +23,7 @@ function Auction({ isModal = false }: AuctionProps) {
     const [isBidPopupOpen, setIsBidPopupOpen] = useState(false);
     const [bidAmountInput, setBidAmountInput] = useState("");
     const [bidError, setBidError] = useState<string | null>(null);
+    const [bidSuccess, setBidSuccess] = useState<string | null>(null);
     const [isPlacingBid, setIsPlacingBid] = useState(false);
     const closeTimeoutRef = useRef<number | null>(null);
 
@@ -85,6 +86,7 @@ function Auction({ isModal = false }: AuctionProps) {
         setIsBidPopupOpen(false);
         setBidAmountInput("");
         setBidError(null);
+        setBidSuccess(null);
     }, [product?.id, product?.closed]);
 
     const closeModal = () => {
@@ -199,6 +201,7 @@ function Auction({ isModal = false }: AuctionProps) {
         if (!isBidPopupOpen) {
             setIsBidPopupOpen(true);
             setBidError(null);
+            setBidSuccess(null);
             return;
         }
 
@@ -214,7 +217,9 @@ function Auction({ isModal = false }: AuctionProps) {
             await auctionsService.placeBid(product.id, bidValue);
             setBidAmountInput("");
             setIsBidPopupOpen(false);
+            setBidSuccess('Successfully placed bid.');
         } catch (placeBidError) {
+            setBidSuccess(null);
             setBidError(placeBidError instanceof Error ? placeBidError.message : "Failed to place bid");
         } finally {
             setIsPlacingBid(false);
@@ -317,6 +322,9 @@ function Auction({ isModal = false }: AuctionProps) {
                                                 value={bidAmountInput}
                                                 onChange={(event) => {
                                                     setBidAmountInput(event.target.value);
+                                                    if (bidSuccess) {
+                                                        setBidSuccess(null);
+                                                    }
                                                     if (bidError) {
                                                         setBidError(null);
                                                     }
@@ -351,6 +359,7 @@ function Auction({ isModal = false }: AuctionProps) {
                                         {isOpen ? (isPlacingBid ? 'Placing Bid...' : 'Place Bid') : 'Auction Closed'}
                                     </button>
                                     {bidError && <p className="mt-2 text-xs text-red-600">{bidError}</p>}
+                                    {bidSuccess && <p className="mt-2 text-xs text-emerald-600">{bidSuccess}</p>}
 
                                 </div>
                             </div>
@@ -439,6 +448,9 @@ function Auction({ isModal = false }: AuctionProps) {
                                     value={bidAmountInput}
                                     onChange={(event) => {
                                         setBidAmountInput(event.target.value);
+                                        if (bidSuccess) {
+                                            setBidSuccess(null);
+                                        }
                                         if (bidError) {
                                             setBidError(null);
                                         }
@@ -472,6 +484,7 @@ function Auction({ isModal = false }: AuctionProps) {
                             {isOpen ? (isPlacingBid ? 'Placing Bid...' : 'Place Bid') : 'Auction Closed'}
                         </button>
                         {bidError && <p className="-mt-4 mb-6 text-xs text-red-600">{bidError}</p>}
+                        {bidSuccess && <p className="-mt-4 mb-6 text-xs text-emerald-600">{bidSuccess}</p>}
                         </div>
                     </div>
                 </div>
