@@ -6,6 +6,7 @@ import com.colonelsanders.backend.mappers.AppUserMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public List<AppUserDto> getAllUsers() {
         return StreamSupport.stream(userRepository.findAll().spliterator(), false)
                 .map(appUserMapper::mapTo)
@@ -31,6 +33,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AppUserDto> getUserById(@PathVariable("id") Long id) {
         return userRepository.findById(id)
                 .map(user -> new ResponseEntity<>(appUserMapper.mapTo(user), HttpStatus.OK))

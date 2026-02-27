@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.io.IOException;
 import java.util.List;
@@ -63,6 +64,7 @@ public class ProductController {
     }
 
     @PostMapping(path = "/api/products/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductImportResultDto> importProducts(@RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) {
             ProductImportResultDto result = ProductImportResultDto.builder()
@@ -100,6 +102,7 @@ public class ProductController {
     }
 
     @PostMapping(path = "/api/products/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> uploadProductImage(@PathVariable("id") Long id, @RequestParam("file") MultipartFile file) {
         Optional<Product> foundProduct = productRepository.findById(id);
         if (foundProduct.isEmpty()) {
@@ -150,6 +153,7 @@ public class ProductController {
     }
 
     @PostMapping(path = "/api/products/{id}/close")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> closeAuction(@PathVariable("id") Long id) {
         Optional<Product> foundProduct = productRepository.findById(id);
         if (foundProduct.isEmpty()) {
@@ -165,6 +169,7 @@ public class ProductController {
     }
 
     @GetMapping(path = "/api/products/{id}/export", produces = "text/csv")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> exportProductCsv(@PathVariable("id") Long id) {
         Optional<Product> foundProduct = productRepository.findById(id);
         if (foundProduct.isEmpty()) {
