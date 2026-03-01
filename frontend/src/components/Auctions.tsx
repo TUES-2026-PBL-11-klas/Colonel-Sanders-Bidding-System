@@ -5,7 +5,7 @@ import type { Auction } from "../services/auctionsService";
 import { authService } from "../services/authService";
 
 const FALLBACK_IMAGE = "/images/default-image.png";
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL = "/api";
 const AUCTION_GALLERY_STORAGE_KEY = "auction-image-gallery";
 
 const mergeImages = (...imageGroups: (string[] | undefined)[]) => {

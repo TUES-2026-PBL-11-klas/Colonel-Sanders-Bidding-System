@@ -13,7 +13,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const response = await authService.login({ email, password })
+      await authService.login({ email, password })
       window.location.href = '/user'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api'
+const API_BASE_URL = '/api'
 const TOKEN_KEY = 'authToken'     // storage key
 
 export interface LoginRequest {
@@ -125,7 +125,7 @@ export const authService = {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await fetch(`${API_BASE_URL}/auth/import-users`, {
+    const response = await fetch(`${API_BASE_URL}/users/import`, {
       method: 'POST',
       body: formData,
     })
