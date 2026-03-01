@@ -112,8 +112,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build backend Docker image
-        run: docker build -t colonel-sanders-backend ./backend
+      - name: Build Docker image
+        run: docker build -f backend/Dockerfile -t colonel-sanders-bidding-system .
 
       # Uncomment and configure when you have a container registry:
       # - name: Log in to GitHub Container Registry
@@ -123,7 +123,7 @@ jobs:
       #     username: ${{ github.actor }}
       #     password: ${{ secrets.GITHUB_TOKEN }}
       #
-      # - name: Push backend image
+      # - name: Push image
       #   run: |
-      #     docker tag colonel-sanders-backend ghcr.io/${{ github.repository }}/backend:latest
-      #     docker push ghcr.io/${{ github.repository }}/backend:latest
+      #     docker tag colonel-sanders-bidding-system ghcr.io/${{ github.repository }}:latest
+      #     docker push ghcr.io/${{ github.repository }}:latest
