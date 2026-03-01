@@ -1,7 +1,9 @@
 # Ignore build artifacts
 backend/build/
 backend/.gradle/
-backend/gradle/
+backend/bin/
+frontend/node_modules/
+frontend/dist/
 
 # Ignore IDE files
 .idea/

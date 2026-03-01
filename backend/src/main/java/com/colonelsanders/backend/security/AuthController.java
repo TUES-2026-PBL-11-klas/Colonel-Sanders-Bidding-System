@@ -45,16 +45,12 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authManager;
     private final JwtService jwtService;
-    private final UserImportService userImportService;
-
     public AuthController(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
-                          AuthenticationManager authManager, JwtService jwtService,
-                          UserImportService userImportService) {
+                          AuthenticationManager authManager, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authManager = authManager;
         this.jwtService = jwtService;
-        this.userImportService = userImportService;
     }
 
 
@@ -74,28 +70,6 @@ public class AuthController {
         user.setNeedsPasswordReset(false);
         userRepository.save(user);
         return ResponseEntity.ok("Password reset successfully");
-    }
-
-    @PostMapping(path = "/import-users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserImportResultDto> importUsers(@RequestParam("file") MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            UserImportResultDto result = UserImportResultDto.builder()
-                    .processed(0).created(0).skipped(0).failed(0)
-                    .errors(java.util.List.of("CSV file is required"))
-                    .build();
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
-
-        try {
-            UserImportResultDto result = userImportService.importCsv(file);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (IOException ex) {
-            UserImportResultDto result = UserImportResultDto.builder()
-                    .processed(0).created(0).skipped(0).failed(0)
-                    .errors(java.util.List.of("Failed to read CSV file"))
-                    .build();
-            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     // simple logout; the request must supply the token in Authorization header

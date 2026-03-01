@@ -9,6 +9,7 @@ import com.colonelsanders.backend.dto.ProductImportResultDto;
 import com.colonelsanders.backend.mappers.ProductMapper;
 import com.colonelsanders.backend.services.ProductImageStorageService;
 import com.colonelsanders.backend.services.ProductImportService;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -118,7 +119,7 @@ public class ProductController {
         product.setImageObjectKey(objectKey);
         productRepository.save(product);
 
-        String imageUrl = productImageStorageService.getPresignedUrl(objectKey);
+        String imageUrl = "/api/products/" + product.getId() + "/image";
         return new ResponseEntity<>(
                 Map.of(
                         "productId", String.valueOf(product.getId()),
@@ -127,6 +128,29 @@ public class ProductController {
                 ),
                 HttpStatus.OK
         );
+    }
+
+    @GetMapping(path = "/api/products/{id}/image")
+    public ResponseEntity<?> getProductImage(@PathVariable("id") Long id) {
+        Optional<Product> foundProduct = productRepository.findById(id);
+        if (foundProduct.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Product product = foundProduct.get();
+        if (product.getImageObjectKey() == null || product.getImageObjectKey().isBlank()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        String contentType = productImageStorageService.getImageContentType(product.getImageObjectKey());
+        InputStreamResource resource = new InputStreamResource(
+                productImageStorageService.getImageStream(product.getImageObjectKey())
+        );
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                .body(resource);
     }
 
     @GetMapping(path = "/api/products/{id}/image-url")
@@ -141,7 +165,7 @@ public class ProductController {
             return new ResponseEntity<>(Map.of("error", "Product does not have an image"), HttpStatus.NOT_FOUND);
         }
 
-        String imageUrl = productImageStorageService.getPresignedUrl(product.getImageObjectKey());
+        String imageUrl = "/api/products/" + product.getId() + "/image";
         return new ResponseEntity<>(
                 Map.of(
                         "productId", String.valueOf(product.getId()),

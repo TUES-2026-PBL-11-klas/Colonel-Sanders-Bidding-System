@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter,
-            @Value("${app.cors.allowed-origins:http://localhost:5173}") String allowedOrigins
+            @Value("${app.cors.allowed-origins:}") String allowedOrigins
     ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
@@ -46,17 +46,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())  // disabled because we use JWT, not cookies (BUT FOR IT TO WORK THE BACKEND NEEDS TO STORE THE TOKEN NOT AS A COOKIE)
+        var builder = http
+                .csrf(csrf -> csrf.disable())  // disabled because we use JWT, not cookies
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // this is public
-                    //.requestMatchers("/api/products/**").permitAll()
-                        .anyRequest().authenticated()             // this is protected
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/products/*/image").permitAll()
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (!allowedOrigins.isEmpty()) {
+            builder.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        }
+
+        return builder.build();
     }
 
     @Bean

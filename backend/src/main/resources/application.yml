@@ -20,9 +20,15 @@ spring:
           starttls:
             enable: true
 
+  web:
+    resources:
+      static-locations: file:/app/static/,classpath:/static/
+
+server:
+  forward-headers-strategy: framework
+
 minio:
   url: ${MINIO_ENDPOINT}
-  public-url: ${MINIO_PUBLIC_URL:${MINIO_ENDPOINT}}
   access:
     name: ${MINIO_ACCESS_KEY}
     secret: ${MINIO_SECRET_KEY}

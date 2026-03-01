@@ -2,12 +2,12 @@ package com.colonelsanders.backend.services;
 
 import com.colonelsanders.backend.database.models.Product;
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.http.Method;
-import org.springframework.beans.factory.annotation.Qualifier;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,20 +20,14 @@ import java.util.UUID;
 public class ProductImageStorageService {
 
     private final MinioClient minioClient;
-    private final MinioClient publicMinioClient;
     private final String bucket;
-    private final int urlExpirySeconds;
 
     public ProductImageStorageService(
             MinioClient minioClient,
-            @Qualifier("publicMinioClient") MinioClient publicMinioClient,
-            @Value("${minio.bucket.name}") String bucket,
-            @Value("${minio.url-expiry-seconds}") int urlExpirySeconds
+            @Value("${minio.bucket.name}") String bucket
     ) {
         this.minioClient = minioClient;
-        this.publicMinioClient = publicMinioClient;
         this.bucket = bucket;
-        this.urlExpirySeconds = urlExpirySeconds;
     }
 
     public String uploadProductImage(Product product, MultipartFile file) {
@@ -61,21 +55,30 @@ public class ProductImageStorageService {
         }
     }
 
-    public String getPresignedUrl(String objectKey) {
-        if (objectKey == null || objectKey.isBlank()) {
-            return null;
-        }
+    public InputStream getImageStream(String objectKey) {
         try {
-            return publicMinioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
                             .bucket(bucket)
                             .object(objectKey)
-                            .expiry(urlExpirySeconds)
                             .build()
             );
         } catch (Exception ex) {
-            throw new RuntimeException("Failed to generate image URL", ex);
+            throw new RuntimeException("Failed to retrieve image from MinIO", ex);
+        }
+    }
+
+    public String getImageContentType(String objectKey) {
+        try {
+            StatObjectResponse stat = minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectKey)
+                            .build()
+            );
+            return stat.contentType();
+        } catch (Exception ex) {
+            return "application/octet-stream";
         }
     }
 
